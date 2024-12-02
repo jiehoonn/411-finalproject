@@ -1,70 +1,142 @@
-# Getting Started with Create React App
+# Stock Trading Application
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A powerful stock trading platform that enables individual investors to manage portfolios, execute trades, and monitor market conditions using the Alpha Vantage API.
 
-## Available Scripts
+## Features
 
-In the project directory, you can run:
+### 1. View My Portfolio
 
-### `npm start`
+- Display current stock holdings
+- Show quantity and current price of each stock
+- Calculate total value of each holding
+- Display overall portfolio value
+- **API Endpoints Used**: Quote Endpoint (fields: stock symbol, latest stock price, closing price)
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### 2. Buy Stock
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+- Purchase shares with specified stock symbol and quantity
+- Real-time market price execution
+- **API Endpoints Used**: Quote Endpoint (fields: symbol, price, latest trading day, previous close)
 
-### `npm test`
+### 3. Sell Stock
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- Sell shares from current holdings
+- Real-time market price execution
+- **API Endpoints Used**: Quote Endpoint (fields: symbol, price, latest trading day)
 
-### `npm run build`
+### 4. Look Up Stock
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+- Detailed stock information
+- Current market price
+- Historical price data
+- Company information
+- **API Endpoints Used**: Quote and Time Series Daily Endpoint
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### 5. Calculate Portfolio Value
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+- Real-time portfolio valuation
+- Integration of the latest stock prices
 
-### `npm run eject`
+## Technical Implementation
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### Core Features and Routes
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+#### User Account Management
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+- **Routes**: `/create-account`, `/login`, `/update-password`
+- Secure password storage with hashing
+- Input validation
+- SQLite database storage
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+#### Portfolio Management
 
-## Learn More
+- **Route**: `/portfolio`
+- Live stock data integration
+- Dynamic portfolio calculations
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+#### Trading Operations
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+- **Routes**: `/buy-stock`, `/sell-stock`
+- Real-time price fetching
+- Transaction validation
+- Virtual wallet management
 
-### Code Splitting
+#### Stock Information
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+- **Route**: `/lookup-stock`
+- Detailed stock data
+- Caching implementation
+- Historical data visualization
 
-### Analyzing the Bundle Size
+#### Analytics
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+- **Route**: `/historical-data`
+- Visual data representation
+- Customizable date ranges
+- **API Endpoints Used**: Time Series Daily, Monthly, and Weekly Endpoints
 
-### Making a Progressive Web App
+## Initial Setup for Team Members
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+1. **Clone the repository:**
 
-### Advanced Configuration
+   ```bash
+   git clone [your-repository-url]
+   ```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+2. **Navigate to the project directory:**
 
-### Deployment
+   ```bash
+   cd [project-name]
+   ```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+3. **Install frontend dependencies:**
 
-### `npm run build` fails to minify
+   ```bash
+   cd frontend
+   npm install
+   ```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+4. **Activate the virtual environment:**
+
+   ```bash
+   cd ../backend
+   source venv/bin/activate
+   ```
+
+5. **Install backend dependencies:**
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+6. **Create a `.env` file in the backend directory:**
+
+   ```bash
+   echo "ALPHA_VANTAGE_API_KEY=your_api_key_here" > .env
+   ```
+
+   _Replace `your_api_key_here` with your actual Alpha Vantage API key._
+
+## Running the Application
+
+You will need two terminal windows to run the application.
+
+### Terminal 1 - Frontend:
+
+```bash
+cd frontend
+npm start
+```
+
+### Terminal 2 - Backend:
+
+```bash
+cd backend
+flask run
+```
+
+## API Documentation
+
+- [Alpha Vantage API Documentation](https://www.alphavantage.co/documentation/)
+- Key endpoints used: Quote, Time Series Daily, ...
+- Database: SQLAlchemy for data persistence.
