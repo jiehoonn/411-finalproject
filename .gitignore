@@ -5,8 +5,9 @@ node_modules/
 backend/venv/
 __pycache__/
 
-# Environment Variables
-*.env
+# dotenv environment variables file
+.env
+.env.test
 
 # OS Files
 .DS_Store
