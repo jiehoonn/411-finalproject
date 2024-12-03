@@ -15,3 +15,30 @@ class AlphaVantageService:
         }
         response = requests.get(self.base_url, params=params)
         return response.json()
+
+    def get_time_series_daily(self, symbol):
+        params = {
+            'function': 'TIME_SERIES_DAILY',
+            'symbol': symbol,
+            'apikey': self.api_key
+        }
+        response = requests.get(self.base_url, params=params)
+        return response.json()
+
+    def get_time_series_weekly(self, symbol):
+        params = {
+            'function': 'TIME_SERIES_WEEKLY',
+            'symbol': symbol,
+            'apikey': self.api_key
+        }
+        response = requests.get(self.base_url, params=params)
+        return response.json()
+
+    def get_time_series_monthly(self, symbol):
+        params = {
+            'function': 'TIME_SERIES_MONTHLY',
+            'symbol': symbol,
+            'apikey': self.api_key
+        }
+        response = requests.get(self.base_url, params=params)
+        return response.json()
