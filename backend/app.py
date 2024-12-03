@@ -71,6 +71,79 @@ def lookup_stock():
 
     return jsonify(data)
 
+@app.route('/historical-data', methods=['GET'])
+def historical_data():
+    symbol = request.args.get('symbol')
+    data_type = request.args.get('type', 'monthly')  # default to 'monthly'
+    start_date = request.args.get('start_date', None)
+    end_date = request.args.get('end_date', None)
+
+    if not symbol:
+        return jsonify({"error": "symbol is required."}), 400
+
+    cache_key = f"{symbol}_{data_type}_{start_date}_{end_date}"
+    if cache_key in cache:
+        cached_data = cache[cache_key]
+        if datetime.now() - cached_data['timestamp'] < timedelta(minutes=10):
+            return jsonify(cached_data['data'])
+
+    av_client = AlphaVantageService()
+    emap = {
+        "daily": av_client.get_time_series_daily,
+        "weekly": av_client.get_time_series_weekly,
+        "monthly": av_client.get_time_series_monthly
+    }
+    func_call = emap.get(data_type.lower())
+
+    try:
+        hist_data = func_call(symbol)
+        time_series_key = next((key for key in hist_data if key.startswith(f"{data_type.capitalize()}")), None)
+
+        if not time_series_key:
+            return jsonify({"error": f"No {data_type} data found for the given symbol."}), 404
+
+        raw_data = hist_data[time_series_key]
+        filtered_data = []
+
+        if not start_date and not end_date:
+            for date, values in raw_data.items():
+                filtered_data.append({
+                    "date": date,
+                    "open": values["1. open"],
+                    "high": values["2. high"],
+                    "low": values["3. low"],
+                    "close": values["4. close"],
+                    "volume": values.get("5. volume", "N/A")
+                })
+        else:
+            for date, values in raw_data.items():
+                if (not start_date or date >= start_date) and (not end_date or date <= end_date):
+                    filtered_data.append({
+                        "date": date,
+                        "open": values["1. open"],
+                        "high": values["2. high"],
+                        "low": values["3. low"],
+                        "close": values["4. close"],
+                        "volume": values.get("5. volume", "N/A")
+                    })
+
+        filtered_data = sorted(filtered_data, key=lambda x: x["date"], reverse=True)
+
+        response_data = {
+            "symbol": symbol,
+            "data_type": data_type,
+            "data": filtered_data
+        }
+
+        cache[cache_key] = {
+            "timestamp": datetime.now(),
+            "data": response_data
+        }
+
+        return jsonify(response_data)
+
+    except requests.exceptions.RequestException as e:
+        return jsonify({"error": f"Error fetching {data_type} data: {str(e)}"}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
