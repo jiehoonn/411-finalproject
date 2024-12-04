@@ -68,60 +68,55 @@ def lookup_stock():
 @bp.route('/historical-data', methods=['GET'])
 def historical_data():
     symbol = request.args.get('symbol')
-    data_type = request.args.get('type', 'monthly')  # default to 'monthly'
-    start_date = request.args.get('start_date', None)
-    end_date = request.args.get('end_date', None)
-
     if not symbol:
-        return jsonify({"error": "symbol is required."}), 400
+        return jsonify({"error": "Stock name required"}), 400
 
-    emap = {
-        "daily": alpha_vantage.get_time_series_daily,
-        "weekly": alpha_vantage.get_time_series_weekly,
-        "monthly": alpha_vantage.get_time_series_monthly
-    }
-    func_call = emap.get(data_type.lower())
-
-    try:
-        hist_data = func_call(symbol)
-        time_series_key = next((key for key in hist_data if key.startswith(f"{data_type.capitalize()}")), None)
-
-        if not time_series_key:
-            return jsonify({"error": f"No {data_type} data found for the given symbol."}), 404
-
-        raw_data = hist_data[time_series_key]
-        filtered_data = []
-
-        if not start_date and not end_date:
-            for date, values in raw_data.items():
-                filtered_data.append({
-                    "date": date,
-                    "open": values["1. open"],
-                    "high": values["2. high"],
-                    "low": values["3. low"],
-                    "close": values["4. close"],
-                    "volume": values.get("5. volume", "N/A")
-                })
-        else:
-            for date, values in raw_data.items():
-                if (not start_date or date >= start_date) and (not end_date or date <= end_date):
-                    filtered_data.append({
-                        "date": date,
-                        "open": values["1. open"],
-                        "high": values["2. high"],
-                        "low": values["3. low"],
-                        "close": values["4. close"],
-                        "volume": values.get("5. volume", "N/A")
-                    })
-
-        filtered_data = sorted(filtered_data, key=lambda x: x["date"], reverse=True)
-
-        response_data = {
-            "symbol": symbol,
-            "data_type": data_type,
-            "data": filtered_data
+    range = request.args.get('range', '1m')
+    ranges = {
+        '1d': {
+            'endpoint': 'TIME_SERIES_INTRADAY',
+            'interval': '60min',
+            'days': 1
+        },
+        '10d': {
+            'endpoint': 'TIME_SERIES_DAILY',
+            'days': 10
+        },
+        '1m': {
+            'endpoint': 'TIME_SERIES_DAILY',
+            'days': 30
+        },
+        '6m': {
+            'endpoint': 'TIME_SERIES_MONTHLY',
+            'months': 6
+        },
+        '1y': {
+            'endpoint': 'TIME_SERIES_MONTHLY',
+            'months': 12
         }
-        return jsonify(response_data)
+    }
 
-    except requests.exceptions.RequestException as e:
-        return jsonify({"error": f"Error fetching {data_type} data: {str(e)}"}), 500
+    dets = ranges.get(range, ranges['1m'])
+
+    if dets['endpoint'] == 'TIME_SERIES_INTRADAY':
+        hist_data = alpha_vantage.get_time_series_intraday(symbol, dets['interval'])
+    elif dets['endpoint'] == 'TIME_SERIES_DAILY':
+        hist_data = alpha_vantage.get_time_series_daily(symbol)
+    elif dets['endpoint'] == 'TIME_SERIES_MONTHLY':
+        hist_data = alpha_vantage.get_time_series_monthly(symbol)
+
+    time_series = hist_data.get(f'Time Series (60min)') or hist_data.get('Time Series (Daily)') or hist_data.get('Monthly Time Series')
+
+    if not time_series:
+        return jsonify({"error": "Invalid data retrieved!"}), 500
+
+    main_data = []
+    today = datetime.today()
+
+    for date, stats in sorted(time_series.items(), reverse=True):
+        date_obj = datetime.strptime(date.split()[0], '%Y-%m-%d')
+        condition = (today - date_obj).days <= dets['days'] if 'days' in dets else (today - date_obj).days <= dets['months'] * 30
+        if condition:
+            main_data.append({"date": date,"close": float(stats["4. close"])})
+
+    return jsonify(main_data)
