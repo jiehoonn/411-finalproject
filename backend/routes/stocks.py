@@ -1,5 +1,7 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, request, jsonify
 from services.alpha_vantage import AlphaVantageService
+from datetime import datetime, timedelta
+import requests
 from services.portfolio import PortfolioService
 
 bp = Blueprint('stocks', __name__)
@@ -12,6 +14,7 @@ def get_quote(symbol):
     quote = alpha_vantage.get_stock_quote(symbol)
     return jsonify(quote)
 
+
 @bp.route('/api/stock/value/<symbol>/<int:shares>')
 def calculate_value(symbol, shares):
     """Calculate value of a stock position"""
@@ -19,3 +22,101 @@ def calculate_value(symbol, shares):
     price = float(quote['Global Quote']['05. price'])
     value = price * shares
     return jsonify({'value': value})
+
+
+@bp.route('/lookup-stock', methods=['GET'])
+def lookup_stock():
+    symbol = request.args.get('symbol')
+    if not symbol:
+        return jsonify({"error": "No symbol given.."}), 400
+
+    try:
+        res_data = alpha_vantage.get_stock_quote(symbol)
+        if "Global Quote" not in res_data or not res_data["Global Quote"]:
+            return jsonify({"error": "No data found for the given symbol"}), 404
+
+        current_price = res_data["Global Quote"].get("05. price", "N/A")
+        volume = res_data["Global Quote"].get("06. volume", "N/A")
+
+    except requests.exceptions.RequestException as e:
+        return jsonify({"error": f"Error getting price: {str(e)}"}), 500
+
+    try:
+        hist_data = alpha_vantage.get_time_series_daily(symbol)
+        if "Time Series (Daily)" not in hist_data:
+            return jsonify({"error": "No historical data found for given symbol"}), 404
+
+        daily_data = hist_data["Time Series (Daily)"]
+        last_7_days = [
+            {"date": date, "close": values["4. close"]}
+            for date, values in list(daily_data.items())[:7]
+        ]
+
+    except requests.exceptions.RequestException as e:
+        return jsonify({"error": f"Error fetching historical data: {str(e)}"}), 500
+
+    data = {
+        "symbol": symbol,
+        "current_price": current_price,
+        "volume": volume,
+        "last_7_days": last_7_days
+    }
+
+    return jsonify(data)
+
+
+@bp.route('/historical-data', methods=['GET'])
+def historical_data():
+    symbol = request.args.get('symbol')
+    if not symbol:
+        return jsonify({"error": "Stock name required"}), 400
+
+    range = request.args.get('range', '1m')
+    ranges = {
+        '1d': {
+            'endpoint': 'TIME_SERIES_INTRADAY',
+            'interval': '60min',
+            'days': 1
+        },
+        '10d': {
+            'endpoint': 'TIME_SERIES_DAILY',
+            'days': 10
+        },
+        '1m': {
+            'endpoint': 'TIME_SERIES_DAILY',
+            'days': 30
+        },
+        '6m': {
+            'endpoint': 'TIME_SERIES_MONTHLY',
+            'months': 6
+        },
+        '1y': {
+            'endpoint': 'TIME_SERIES_MONTHLY',
+            'months': 12
+        }
+    }
+
+    dets = ranges.get(range, ranges['1m'])
+
+    if dets['endpoint'] == 'TIME_SERIES_INTRADAY':
+        hist_data = alpha_vantage.get_time_series_intraday(symbol, dets['interval'])
+    elif dets['endpoint'] == 'TIME_SERIES_DAILY':
+        hist_data = alpha_vantage.get_time_series_daily(symbol)
+    elif dets['endpoint'] == 'TIME_SERIES_MONTHLY':
+        hist_data = alpha_vantage.get_time_series_monthly(symbol)
+
+    time_series = hist_data.get(f'Time Series (60min)') or hist_data.get('Time Series (Daily)') or hist_data.get('Monthly Time Series')
+
+    if not time_series:
+        return jsonify({"error": "Invalid data retrieved!"}), 500
+
+    main_data = []
+    today = datetime.today()
+
+    for date, stats in sorted(time_series.items(), reverse=True):
+        date_obj = datetime.strptime(date.split()[0], '%Y-%m-%d')
+        condition = (today - date_obj).days <= dets['days'] if 'days' in dets else (today - date_obj).days <= dets['months'] * 30
+        if condition:
+            main_data.append({"date": date,"close": float(stats["4. close"])})
+
+    return jsonify(main_data)
