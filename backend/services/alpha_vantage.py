@@ -25,14 +25,16 @@ class AlphaVantageService:
         response = requests.get(self.base_url, params=params)
         return response.json()
 
-    def get_time_series_weekly(self, symbol):
+    def get_time_series_intraday(self, symbol, interval):
         params = {
-            'function': 'TIME_SERIES_WEEKLY',
+            'function': 'TIME_SERIES_INTRADAY',
             'symbol': symbol,
+            'interval': interval,
             'apikey': self.api_key
         }
         response = requests.get(self.base_url, params=params)
         return response.json()
+
 
     def get_time_series_monthly(self, symbol):
         params = {
