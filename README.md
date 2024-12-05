@@ -99,7 +99,7 @@ A powerful stock trading platform that enables individual investors to manage po
 4. **Activate the virtual environment:**
 
    ```bash
-   cd ../backend
+   cd ../app/backend
    source venv/bin/activate
    ```
 
