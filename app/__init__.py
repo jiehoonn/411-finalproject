@@ -1,7 +1,7 @@
-from backend.routes import user_routes
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
+from backend.routes.stocks import bp as stocks_bp
 
 db = SQLAlchemy()
 bcrypt = Bcrypt()
@@ -13,10 +13,9 @@ def create_app():
     db.init_app(app)
     bcrypt.init_app(app)
 
-    from app.routes import portfolio_routes, trade_routes, stock_routes
-    app.register_blueprint(user_routes.bp)
-    app.register_blueprint(portfolio_routes.bp)
-    app.register_blueprint(trade_routes.bp)
-    app.register_blueprint(stock_routes.bp)
+    # app.register_blueprint(user_routes.bp)
+    # app.register_blueprint(portfolio_routes.bp)
+    # app.register_blueprint(trade_routes.bp)
+    app.register_blueprint(stocks_bp)
 
     return app

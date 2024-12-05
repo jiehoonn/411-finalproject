@@ -1,16 +1,17 @@
 from datetime import datetime, UTC
 from sqlalchemy import Float, Integer, String, DateTime
-from app import db
+from flask_sqlalchemy import SQLAlchemy
+
+db = SQLAlchemy()  # Create a db object here
 
 class Stock(db.Model):
     """Stock model for tracking portfolio holdings"""
-    
     id = db.Column(Integer, primary_key=True)
     symbol = db.Column(String(10), nullable=False)
     shares = db.Column(Integer, nullable=False)
     purchase_price = db.Column(Float, nullable=False)
     purchase_date = db.Column(DateTime, default=datetime.now(UTC))
-    
+
     def to_dict(self):
         return {
             'symbol': self.symbol,
