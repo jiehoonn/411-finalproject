@@ -59,7 +59,7 @@ def lookup_stock():
 
     try:
         # get market status data
-        md = alpha_vantage.get_market_status()
+        md = alpha_vantage.get_global_market_status()
         ms = []
         if "market_status" in md:
             for m in md["market_status"]:
