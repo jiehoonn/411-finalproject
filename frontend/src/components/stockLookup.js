@@ -43,6 +43,7 @@ const StockLookup = () => {
           <Text>Current Price: ${data.current_price}</Text>
           <br />
           <Text>Volume: {data.volume}</Text>
+
           <Title level={5} style={{ marginTop: 16 }}>
             Last 7 Days
           </Title>
@@ -54,12 +55,29 @@ const StockLookup = () => {
               </List.Item>
             )}
           />
+
+          <Title level={5} style={{ marginTop: 16 }}>
+            Market Status
+          </Title>
+          {data.market_status && data.market_status.length > 0 ? (
+            <List
+              dataSource={data.market_status}
+              renderItem={(market) => (
+                <List.Item>
+                  <Text strong>{market.region} - {market.market_type}</Text><br />
+                  <Text>Exchanges: {market.primary_exchanges}</Text><br />
+                  <Text>Open: {market.local_open} - Close: {market.local_close}</Text><br />
+                  <Text>Status: {market.current_status}</Text>
+                </List.Item>
+              )}
+            />
+          ) : (
+            <Text>No market status data available</Text>
+          )}
         </div>
       )}
     </Card>
   );
 };
-
-
 
 export default StockLookup;

@@ -44,3 +44,11 @@ class AlphaVantageService:
         }
         response = requests.get(self.base_url, params=params)
         return response.json()
+
+    def get_global_market_status(self):
+        params = {
+            'function': 'MARKET_STATUS',
+            'apikey': self.api_key
+        }
+        response = requests.get(self.base_url, params=params)
+        return response.json()

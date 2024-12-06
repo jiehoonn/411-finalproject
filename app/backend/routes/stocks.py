@@ -55,11 +55,29 @@ def lookup_stock():
     except requests.exceptions.RequestException as e:
         return jsonify({"error": f"Error fetching historical data: {str(e)}"}), 500
 
+    try:
+        # get market status data
+        md = alpha_vantage.get_market_status()
+        ms = []
+        if "market_status" in md:
+            for m in md["market_status"]:
+                ms.append({
+                    "market_type": m.get("market_type", "Unknown"),
+                    "region": m.get("region", "Unknown"),
+                    "primary_exchanges": m.get("primary_exchanges", "Unknown"),
+                    "local_open": m.get("local_open", "Unknown"),
+                    "local_close": m.get("local_close", "Unknown"),
+                    "current_status": m.get("current_status", "Unknown")
+                })
+    except requests.exceptions.RequestException as e:
+        return jsonify({"error": f"Error fetching market status: {str(e)}"}), 500
+
     data = {
         "symbol": symbol,
         "current_price": current_price,
         "volume": volume,
-        "last_7_days": last_7_days
+        "last_7_days": last_7_days,
+        "market_status": ms
     }
 
     return jsonify(data)
