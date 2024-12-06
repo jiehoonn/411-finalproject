@@ -1,10 +1,12 @@
 from flask import Blueprint, request, jsonify
+from flask_cors import CORS
 from services.alpha_vantage import AlphaVantageService
 from datetime import datetime, timedelta
 import requests
 from services.portfolio import PortfolioService
 
 bp = Blueprint('stocks', __name__)
+CORS(bp)
 alpha_vantage = AlphaVantageService()
 portfolio_service = PortfolioService()
 

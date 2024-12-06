@@ -1,13 +1,14 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from routes.stocks import bp as stocks_bp
+from backend.routes.stocks import bp as stocks_bp
 from flask_cors import CORS
 import os
 
 db = SQLAlchemy()
 
 app = Flask(__name__)
-CORS(app, origins="http://localhost:3000")
+CORS(app, origins="http://localhost:3000", supports_credentials=True)
+
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///stocktrading.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False

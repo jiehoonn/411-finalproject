@@ -1,4 +1,4 @@
-from app.models import db, User
+from backend.app.models import db, User
 
 def create_user(username, email, password):
     if User.query.filter_by(username=username).first():

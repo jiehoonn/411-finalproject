@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
-from backend.routes.stocks import bp as stocks_bp
+from routes.stocks import bp as stocks_bp
 
 db = SQLAlchemy()
 bcrypt = Bcrypt()
