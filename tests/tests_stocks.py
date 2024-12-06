@@ -1,7 +1,7 @@
 import pytest
 from flask import Flask, jsonify
 from unittest.mock import MagicMock
-from stocks import bp, AlphaVantageService, PortfolioService
+from backend.routes.stocks import bp, AlphaVantageService, PortfolioService
 
 # flask app instance for testing
 @pytest.fixture
@@ -19,9 +19,11 @@ def client(app):
 @pytest.fixture
 def mock_alpha_vantage():
     mock = MagicMock(AlphaVantageService)
+
     mock.get_stock_quote.return_value = {
         "Global Quote": {"05. price": "150.00"}
     }
+
     mock.get_time_series_daily.return_value = {
         "Time Series (Daily)": {
             "2024-12-06": {"4. close": "150.00"},
@@ -56,6 +58,19 @@ def mock_alpha_vantage():
             "2024-11-07": {"4. close": "88.00"}
         }
     }
+
+    mock.get_market_status.return_value = {
+        "market_status": [
+            {
+                "market_type": "Stock Market",
+                "region": "US",
+                "primary_exchanges": ["NASDAQ", "NYSE"],
+                "local_open": "09:30",
+                "local_close": "16:00",
+                "current_status": "Closed"
+            }
+        ]
+    }
     return mock
 
 # mock the portfolio service
@@ -69,21 +84,35 @@ def test_get_quote(client, mock_alpha_vantage):
     # Mock the service for the test
     symbol = "AAPL"
     response = client.get(f'/api/stock/quote/{symbol}')
-    
+
     # verify the mock was called and response
     mock_alpha_vantage.get_stock_quote.assert_called_once_with(symbol)
     assert response.status_code == 200
     assert b"150.00" in response.data
+
+    # test with invalid symbol
+    mock_alpha_vantage.get_stock_quote.return_value = {"Global Quote": None}
+    response = client.get(f'/api/stock/quote/{symbol}')
+    assert response.status_code == 500
+    assert b"error" in response.data
+
 
 # test for /api/stock/value/<symbol>/<int:shares>
 def test_calculate_value(client, mock_alpha_vantage):
     symbol = "AAPL"
     shares = 10
     response = client.get(f'/api/stock/value/{symbol}/{shares}')
-    
+
     # verify the value calculation (150.00 * 10 = 1500.00)
     assert response.status_code == 200
     assert b'"value": 1500.0' in response.data
+
+    # test with invalid symbol
+    mock_alpha_vantage.get_stock_quote.return_value = {"Global Quote": None}
+    response = client.get(f'/api/stock/value/{symbol}/{shares}')
+    assert response.status_code == 500
+    assert b"error" in response.data
+
 
 # test for /lookup-stock
 def test_lookup_stock(client, mock_alpha_vantage):
@@ -93,17 +122,25 @@ def test_lookup_stock(client, mock_alpha_vantage):
     assert response.status_code == 200
     assert b"current_price" in response.data
     assert b"AAPL" in response.data
-    
+
     # test with no symbol
-    response = client.get('/lookup-stock')
+    response = client.get('/lookup-stock?symbol=')
     assert response.status_code == 400
-    assert b"error" in response.data
-    
+    assert b"No symbol given.." in response.data
+
     # test with invalid symbol (no data returned)
     mock_alpha_vantage.get_stock_quote.return_value = {"Global Quote": None}
     response = client.get(f'/lookup-stock?symbol={symbol}')
     assert response.status_code == 404
-    assert b"error" in response.data
+    assert b"No data found for the given symbol" in response.data
+
+    # test with no market status for valid symbol
+    response = client.get(f'/lookup-stock?symbol={symbol}')
+    assert response.status_code == 200
+    assert b"market_status" in response.data
+    assert b"[]" in response.data
+
+
 
 # test for /historical-data
 def test_historical_data(client, mock_alpha_vantage):
@@ -113,11 +150,16 @@ def test_historical_data(client, mock_alpha_vantage):
     assert response.status_code == 200
     assert b"date" in response.data
     assert b"close" in response.data
-    
+
     # test with no symbol
     response = client.get('/historical-data')
     assert response.status_code == 400
-    assert b"error" in response.data
+    assert b"Stock name required" in response.data
+
+    # test with invalid symbol
+    response = client.get('/lookup-stock?symbol=AAPLT')
+    assert response.status_code == 404
+    assert b"No historical data found for given symbol" in response.data
 
     # test with invalid range
     response = client.get(f'/historical-data?symbol={symbol}&range=invalid')
