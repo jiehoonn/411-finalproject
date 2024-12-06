@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 import requests
 from services.portfolio import PortfolioService
 
+
 bp = Blueprint('stocks', __name__)
 CORS(bp)
 alpha_vantage = AlphaVantageService()
@@ -12,14 +13,31 @@ portfolio_service = PortfolioService()
 
 @bp.route('/api/stock/quote/<symbol>')
 def get_quote(symbol):
-    """Get current stock quote"""
+    """
+    Get the current stock data for the given symbol.
+
+    Args:
+        symbol (str): The stock symbol for which the quote is fetched.
+
+    Returns:
+        quote: Stock data in JSON format.
+    """
     quote = alpha_vantage.get_stock_quote(symbol)
     return jsonify(quote)
 
 
 @bp.route('/api/stock/value/<symbol>/<int:shares>')
 def calculate_value(symbol, shares):
-    """Calculate value of a stock position"""
+    """
+    Calculates the value of a stock position based on the current stock quote.
+
+    Args:
+        symbol (str): The stock symbol.
+        shares (int): The number of shares owned.
+
+    Returns:
+        value: The calculated value of the stock position in JSON format.
+    """
     quote = alpha_vantage.get_stock_quote(symbol)
     price = float(quote['Global Quote']['05. price'])
     value = price * shares
@@ -28,6 +46,15 @@ def calculate_value(symbol, shares):
 
 @bp.route('/lookup-stock', methods=['GET'])
 def lookup_stock():
+    """
+    Find and return the current stock data and market status for a given symbol
+
+    Args:
+        symbol (str): The stock symbol.
+
+    Returns:
+        data: Stock data in JSON format or error message.
+    """
     symbol = request.args.get('symbol')
     if not symbol:
         return jsonify({"error": "No symbol given.."}), 400
@@ -87,6 +114,16 @@ def lookup_stock():
 
 @bp.route('/historical-data', methods=['GET'])
 def historical_data():
+    """
+    Get the historical trends data for the stock symbol within a specified time range.
+
+    Args:
+        symbol (str): The stock symbol.
+        range (str): Time range for the historical data (e.g., '1d', '10d', '1m').
+
+    Returns:
+        main_data: Historical stock trend data in JSON format or error message.
+    """
     symbol = request.args.get('symbol')
     if not symbol:
         return jsonify({"error": "Stock name required"}), 400
