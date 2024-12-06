@@ -4,7 +4,7 @@ def create_user(username, email, password):
     if User.query.filter_by(username=username).first():
         raise ValueError("Username already exists")
 
-    user = User(username=username, email=email)
+    user = User(username=username, email=email, balance=1000000.00)
     user.set_password(password)
     db.session.add(user)
     db.session.commit()

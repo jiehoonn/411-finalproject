@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Button } from 'antd';
 
 const Login = () => {
     const [username, setUsername] = useState('');
@@ -19,75 +20,45 @@ const Login = () => {
                 body: JSON.stringify({ username, password }),
             });
 
-            const data = await response.json();
-            
             if (response.ok) {
-                setMessage('Login successful!');
                 navigate('/dashboard');
             } else {
+                const data = await response.json();
                 setMessage(data.error);
             }
         } catch (error) {
-            setMessage('An error occurred during login.');
+            setMessage('Login failed');
         }
     };
 
     return (
-        <div style={{ fontFamily: "Arial, sans-serif", textAlign: "center", marginTop: "50px" }}>
-            <h2>Login</h2>
-            <form onSubmit={handleLogin} style={{ display: "inline-block", textAlign: "left" }}>
-                <div style={{ marginBottom: "10px" }}>
+        <div style={{ textAlign: 'center', marginTop: '50px' }}>
+            <h1>Stock Trading Platform</h1>
+            <form onSubmit={handleLogin} style={{ display: 'inline-block' }}>
+                <div>
                     <input
                         type="text"
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
                         placeholder="Username"
-                        style={{
-                            width: "200px",
-                            padding: "8px",
-                            marginBottom: "10px",
-                            border: "1px solid #ccc",
-                            borderRadius: "4px",
-                        }}
-                        required
+                        style={{ margin: '10px', padding: '5px' }}
                     />
                 </div>
-                <div style={{ marginBottom: "10px" }}>
+                <div>
                     <input
                         type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="Password"
-                        style={{
-                            width: "200px",
-                            padding: "8px",
-                            marginBottom: "10px",
-                            border: "1px solid #ccc",
-                            borderRadius: "4px",
-                        }}
-                        required
+                        style={{ margin: '10px', padding: '5px' }}
                     />
                 </div>
-                <button
-                    type="submit"
-                    style={{
-                        width: "100%",
-                        padding: "10px",
-                        backgroundColor: "#007BFF",
-                        color: "white",
-                        border: "none",
-                        borderRadius: "4px",
-                        cursor: "pointer",
-                    }}
-                >
-                    Login
-                </button>
+                <Button type="primary" htmlType="submit">Login</Button>
+                <Button onClick={() => navigate('/register')} style={{ marginLeft: '10px' }}>
+                    Register New Account
+                </Button>
             </form>
-            {message && (
-                <p style={{ marginTop: "20px", color: message.includes('successful') ? 'green' : 'red' }}>
-                    {message}
-                </p>
-            )}
+            {message && <p style={{ color: 'red' }}>{message}</p>}
         </div>
     );
 };

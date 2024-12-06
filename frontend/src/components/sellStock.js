@@ -1,22 +1,46 @@
-import React from "react";
-import { Form, Input, Button } from "antd";
+import React, { useState } from 'react';
+import { Button, message } from 'antd';
 
-function SellStock() {
-  return (
-    <Form layout="vertical">
-      <Form.Item label=" Symbol" name="symbol">
-        <Input placeholder="Enter symbol" />
-      </Form.Item>
-      <Form.Item label="Quantity" name="quantity">
-        <Input type="number" placeholder="Enter quantity" />
-      </Form.Item>
-      <Form.Item>
-        <Button type="primary" danger>
-          Sell
+const SellStock = ({ symbol, shares, amount, tradeType }) => {
+    const handleSell = async () => {
+        try {
+            const response = await fetch('http://127.0.0.1:5000/trade', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    symbol,
+                    action: 'sell',
+                    [tradeType]: tradeType === 'shares' ? parseFloat(shares) : parseFloat(amount)
+                })
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                message.success(`Successfully sold ${symbol}`);
+            } else {
+                message.error(data.error);
+            }
+        } catch (error) {
+            message.error('Failed to execute sell order');
+        }
+    };
+
+    return (
+        <Button 
+            type="danger"
+            onClick={handleSell}
+            style={{ width: '100%',
+                color: 'white',
+                backgroundColor: 'red'
+             }}
+            disabled={!symbol || (tradeType === 'shares' ? !shares : !amount)}
+        >
+            Sell {symbol}
         </Button>
-      </Form.Item>
-    </Form>
-  );
-}
+    );
+};
 
 export default SellStock;

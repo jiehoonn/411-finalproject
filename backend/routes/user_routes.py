@@ -47,3 +47,18 @@ def login():
         }), 200
     
     return jsonify({'error': 'Invalid username or password'}), 401
+
+@bp.route('/profile', methods=['GET'])
+@login_required
+def get_profile():
+    return jsonify({
+        'id': request.user.id,
+        'username': request.user.username,
+        'email': request.user.email
+    })
+
+@bp.route('/logout', methods=['POST'])
+@login_required
+def logout():
+    session.clear()
+    return jsonify({'message': 'Logged out successfully'})
