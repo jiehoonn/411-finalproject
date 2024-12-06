@@ -36,58 +36,72 @@ const RegisterPage = () => {
   return (
     <div style={{ fontFamily: "Arial, sans-serif", textAlign: "center", marginTop: "50px" }}>
       <h1 style={{ fontSize: "2.5rem" }}>Stock Trading Application</h1>
-      <p style={{ fontSize: "1.5rem", marginBottom: "30px" }}>Log In</p>
+      <p style={{ fontSize: "1.5rem", marginBottom: "30px" }}>Register</p>
 
-      <div>
-        <form onSubmit={handleRegister} style={{ display: "inline-block", textAlign: "left" }}>
-          <div style={{ marginBottom: "10px" }}>
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Username"
-              style={{
-                width: "200px",
-                padding: "8px",
-                marginBottom: "10px",
-                border: "1px solid #ccc",
-                borderRadius: "4px",
-              }}
-              required
-            />
-          </div>
-          <div style={{ marginBottom: "10px" }}>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password"
-              style={{
-                width: "200px",
-                padding: "8px",
-                marginBottom: "10px",
-                border: "1px solid #ccc",
-                borderRadius: "4px",
-              }}
-              required
-            />
-          </div>
-          <button
-            type="submit"
+      <form onSubmit={handleRegister} style={{ display: "inline-block", textAlign: "left" }}>
+        <div style={{ marginBottom: "10px" }}>
+          <input
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="Username"
             style={{
-              width: "100%",
-              padding: "10px",
-              backgroundColor: "#007BFF",
-              color: "white",
-              border: "none",
+              width: "200px",
+              padding: "8px",
+              marginBottom: "10px",
+              border: "1px solid #ccc",
               borderRadius: "4px",
-              cursor: "pointer",
             }}
-          >
-            Register
-          </button>
-        </form>
-      </div>
+            required
+          />
+        </div>
+        <div style={{ marginBottom: "10px" }}>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Email"
+            style={{
+              width: "200px",
+              padding: "8px",
+              marginBottom: "10px",
+              border: "1px solid #ccc",
+              borderRadius: "4px",
+            }}
+            required
+          />
+        </div>
+        <div style={{ marginBottom: "10px" }}>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Password"
+            style={{
+              width: "200px",
+              padding: "8px",
+              marginBottom: "10px",
+              border: "1px solid #ccc",
+              borderRadius: "4px",
+            }}
+            required
+          />
+        </div>
+        <button
+          type="submit"
+          style={{
+            width: "100%",
+            padding: "10px",
+            backgroundColor: "#007BFF",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer",
+          }}
+        >
+          Register
+        </button>
+      </form>
       {message && (
         <p style={{ marginTop: "20px", color: message.includes("error") ? "red" : "green" }}>
           {message}
