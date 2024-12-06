@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from backend.app.models import db, User
+from flask_bcrypt import check_password_hash
 
 bp = Blueprint('user', __name__, url_prefix='/user')
 
@@ -22,3 +23,27 @@ def create_account():
     db.session.commit()
 
     return jsonify({'message': 'Account created successfully'}), 201
+
+@bp.route('/login', methods=['POST'])
+def login():
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
+
+    if not username or not password:
+        return jsonify({'error': 'Missing username or password'}), 400
+
+    user = User.query.filter_by(username=username).first()
+    
+    if user and user.check_password(password):
+        session['user_id'] = user.id
+        return jsonify({
+            'message': 'Login successful',
+            'user': {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email
+            }
+        }), 200
+    
+    return jsonify({'error': 'Invalid username or password'}), 401
