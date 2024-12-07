@@ -1,28 +1,27 @@
 import React, { useState } from "react";
 
-const RegisterPage = () => {
+const LoginPage = () => {
   const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
 
-  const handleRegister = async (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch("http://127.0.0.1:5000/user/create-account", {
+      const response = await fetch("http://127.0.0.1:5000/user/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ username, email, password }),
+        body: JSON.stringify({ username, password }),
       });
 
       if (response.ok) {
         const data = await response.json();
-        setMessage(data.message); // success message
+        setMessage("Login successful!");
         setUsername("");
-        setEmail("");
         setPassword("");
+        // Perform further actions on successful login
       } else {
         const errorData = await response.json();
         setMessage(errorData.error); // error message
@@ -36,31 +35,15 @@ const RegisterPage = () => {
   return (
     <div style={{ fontFamily: "Arial, sans-serif", textAlign: "center", marginTop: "50px" }}>
       <h1 style={{ fontSize: "2.5rem" }}>Stock Trading Application</h1>
-      <p style={{ fontSize: "1.5rem", marginBottom: "30px" }}>Register</p>
+      <p style={{ fontSize: "1.5rem", marginBottom: "30px" }}>Log In</p>
 
-      <form onSubmit={handleRegister} style={{ display: "inline-block", textAlign: "left" }}>
+      <form onSubmit={handleLogin} style={{ display: "inline-block", textAlign: "left" }}>
         <div style={{ marginBottom: "10px" }}>
           <input
             type="text"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             placeholder="Username"
-            style={{
-              width: "200px",
-              padding: "8px",
-              marginBottom: "10px",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-            }}
-            required
-          />
-        </div>
-        <div style={{ marginBottom: "10px" }}>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email"
             style={{
               width: "200px",
               padding: "8px",
@@ -99,7 +82,7 @@ const RegisterPage = () => {
             cursor: "pointer",
           }}
         >
-          Register
+          Login
         </button>
       </form>
       {message && (
@@ -111,4 +94,4 @@ const RegisterPage = () => {
   );
 };
 
-export default RegisterPage;
+export default LoginPage;

@@ -14,9 +14,8 @@ import {
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
-
 const HistoricalData = () => {
-  const [symbol, setSymbol] = useState("");
+  const [symbols, setSymbols] = useState([""]);
   const [range, setRange] = useState("1d");
   const [chartData, setChartData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -26,24 +25,36 @@ const HistoricalData = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`http://127.0.0.1:5000/historical-data?symbol=${symbol}&range=${range}`);
-      if (!response.ok) throw new Error("Failed to fetch historical data");
-      const data = await response.json();
-      const labels = data.map((entry) => entry.date);
-      const closePrices = data.map((entry) => entry.close);
+      const datasets = [];
+      for (const symbol of symbols) {
+        if (!symbol) continue; // Skip empty symbols
+        const response = await fetch(`http://127.0.0.1:5000/historical-data?symbol=${symbol}&range=${range}`);
+        if (!response.ok) throw new Error(`Failed to fetch data for ${symbol}`);
+        const data = await response.json();
+        const labels = data.map((entry) => entry.date);
+        const closePrices = data.map((entry) => entry.close);
 
-      setChartData({
-        labels,
-        datasets: [
-          {
-            label: `Stock Price (${symbol})`,
-            data: closePrices,
-            fill: false,
-            borderColor: "rgb(191,52,52)",
-            tension: 0.1,
-          },
-        ],
-      });
+        datasets.push({
+          label: `Stock Price (${symbol})`,
+          data: closePrices,
+          fill: false,
+          borderColor: `hsl(${Math.random() * 360}, 70%, 50%)`, // Random color
+          tension: 0.1,
+        });
+
+        // Set labels only once
+        if (!chartData?.labels) {
+          setChartData({
+            labels,
+            datasets: [],
+          });
+        }
+      }
+
+      setChartData((prev) => ({
+        ...prev,
+        datasets,
+      }));
     } catch (err) {
       setError(err.message);
     }
@@ -54,14 +65,45 @@ const HistoricalData = () => {
     setRange(e.target.value);
   };
 
+  const handleSymbolChange = (index, value) => {
+    const updatedSymbols = [...symbols];
+    updatedSymbols[index] = value;
+    setSymbols(updatedSymbols);
+  };
+
+  const addSymbol = () => {
+    if (symbols.length < 3) setSymbols([...symbols, ""]);
+  };
+
+  const removeSymbol = (index) => {
+    if (symbols.length > 1) {
+      setSymbols(symbols.filter((_, i) => i !== index));
+    }
+  };
+
   return (
     <Card title="Historical Data" bordered={true}>
-      <Input
-        placeholder="Enter stock symbol (e.g., AAPL)"
-        value={symbol}
-        onChange={(e) => setSymbol(e.target.value)}
-        style={{ marginBottom: 16 }}
-      />
+      {symbols.map((symbol, index) => (
+        <div key={index} style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
+          <Input
+            placeholder={`Enter stock symbol (e.g., AAPL)`}
+            value={symbol}
+            onChange={(e) => handleSymbolChange(index, e.target.value)}
+            style={{ flex: 1, marginRight: 8 }}
+          />
+          <Button
+            danger
+            onClick={() => removeSymbol(index)}
+            disabled={symbols.length === 1} // Prevent removing the last symbol
+          >
+            Remove
+          </Button>
+        </div>
+      ))}
+
+      <Button type="dashed" onClick={addSymbol} block style={{ marginBottom: 16 }} disabled={symbols.length >= 3}>
+        Add Symbol
+      </Button>
 
       <Radio.Group
         onChange={handleRangeChange}
@@ -76,7 +118,7 @@ const HistoricalData = () => {
         <Radio.Button value="1y">1Y</Radio.Button>
       </Radio.Group>
 
-      <Button type="primary" onClick={fetchData} block disabled={!symbol || loading}>
+      <Button type="primary" onClick={fetchData} block disabled={loading || symbols.every((symbol) => !symbol)}>
         {loading ? "Loading..." : "Fetch Data"}
       </Button>
 

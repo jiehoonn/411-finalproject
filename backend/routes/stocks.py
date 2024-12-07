@@ -84,29 +84,11 @@ def lookup_stock():
     except requests.exceptions.RequestException as e:
         return jsonify({"error": f"Error fetching historical data: {str(e)}"}), 500
 
-    try:
-        # get market status data
-        md = alpha_vantage.get_market_status()
-        ms = []
-        if "market_status" in md:
-            for m in md["market_status"]:
-                ms.append({
-                    "market_type": m.get("market_type", "Unknown"),
-                    "region": m.get("region", "Unknown"),
-                    "primary_exchanges": m.get("primary_exchanges", "Unknown"),
-                    "local_open": m.get("local_open", "Unknown"),
-                    "local_close": m.get("local_close", "Unknown"),
-                    "current_status": m.get("current_status", "Unknown")
-                })
-    except requests.exceptions.RequestException as e:
-        return jsonify({"error": f"Error fetching market status: {str(e)}"}), 500
-
     data = {
         "symbol": symbol,
         "current_price": current_price,
         "volume": volume,
-        "last_7_days": last_7_days,
-        "market_status": ms
+        "last_7_days": last_7_days
     }
 
     return jsonify(data)
@@ -177,3 +159,13 @@ def historical_data():
             main_data.append({"date": date,"close": float(stats["4. close"])})
 
     return jsonify(main_data)
+
+
+
+@bp.route('/market-status', methods=['GET'])
+def get_market_status():
+    try:
+        market_status_data = alpha_vantage.get_global_market_status()
+        return jsonify(market_status_data)
+    except requests.exceptions.RequestException as e:
+        return jsonify({"error": f"Error getting market status: {str(e)}"}), 500

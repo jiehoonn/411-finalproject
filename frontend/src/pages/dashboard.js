@@ -4,6 +4,7 @@ import HistoricalData from "../components/historicalData";
 import StockLookup from "../components/stockLookup";
 import BuyStock from "../components/buyStock";
 import SellStock from "../components/sellStock";
+import MarketStatus from "../components/marketStatus";
 
 const { Title } = Typography;
 const { Header, Content } = Layout;
@@ -18,6 +19,15 @@ function Dashboard() {
         </Title>
       </Header>
       <Content style={{ padding: "50px" }}>
+        {/* Market Status */}
+        <Row gutter={[20, 20]}>
+          <Col span={24}>
+            <MarketStatus />
+          </Col>
+        </Row>
+
+        <div style={{ marginTop: "20px" }} />
+
         <Row gutter={[20, 20]}>
           {/* Stock Lookup */}
           <Col xs={24} sm={12} lg={12}>
