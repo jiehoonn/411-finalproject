@@ -29,10 +29,14 @@ A powerful stock trading platform that enables individual investors to manage po
 - Detailed stock information
 - Current market price
 - Historical price data
-- Company information
-- **API Endpoints Used**: Quote and Time Series Daily Endpoint
+- **API Endpoints Used**: Quote, Global Market Open & Close Status and Time Series Daily Endpoint
 
-### 5. Calculate Portfolio Value
+### 5. Stock Trends (Historical Data)
+
+- Stock trends from the past 1 day, 10 days, 1 month, 6 month and 1 year
+- **API Endpoints Used**: Time Series Daily, Time Series Intraday and Time Series Monthly Endpoint
+
+### 6. Calculate Portfolio Value
 
 - Real-time portfolio valuation
 - Integration of the latest stock prices
