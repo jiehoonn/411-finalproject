@@ -120,3 +120,5 @@ def historical_data():
             main_data.append({"date": date,"close": float(stats["4. close"])})
 
     return jsonify(main_data)
+
+
