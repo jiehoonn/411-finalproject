@@ -44,3 +44,62 @@ class AuthService:
         user.hashed_password = new_hashed_password
         db.session.commit()
         return {'message': 'Password updated successfully'}, 200
+
+
+
+# import os
+# import hashlib
+# from flask import Blueprint, request, jsonify
+# from backend.models.user import User
+# from backend.database import db
+
+# auth_blueprint = Blueprint('auth', __name__)
+
+# # helper function to hash passwords
+# def hash_password(password, salt):
+#     return hashlib.sha256((salt + password).encode('utf-8')).hexdigest()
+
+# @auth_blueprint.route('/register', methods=['POST'])
+# def register():
+#     data = request.json
+#     username = data.get('username')
+#     password = data.get('password')
+
+#     if not username or not password:
+#         return jsonify({'message': 'Username and password are required!'}), 400
+
+#     # check if user already exists
+#     if User.query.filter_by(username=username).first():
+#         return jsonify({'message': 'User already exists!'}), 400
+
+#     # generate salt and hash the password
+#     salt = os.urandom(32).hex()
+#     hashed_password = hash_password(password, salt)
+
+#     # create and save the user
+#     new_user = User(username=username, salt=salt, hashed_password=hashed_password)
+#     db.session.add(new_user)
+#     db.session.commit()
+
+#     return jsonify({'message': 'User registered successfully!'}), 201
+
+# @auth_blueprint.route('/login', methods=['POST'])
+# def login():
+#     data = request.json
+#     username = data.get('username')
+#     password = data.get('password')
+
+#     if not username or not password:
+#         return jsonify({'message': 'Username and password are required!'}), 400
+
+#     # Fetch user from database
+#     user = User.query.filter_by(username=username).first()
+#     if not user:
+#         return jsonify({'message': 'Invalid username or password!'}), 401
+
+#     # Verify the password
+#     hashed_password = hash_password(password, user.salt)
+#     if hashed_password != user.hashed_password:
+#         return jsonify({'message': 'Invalid username or password!'}), 401
+
+#     return jsonify({'message': 'Login successful!'}), 200
