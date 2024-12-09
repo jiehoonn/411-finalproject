@@ -3,8 +3,8 @@ from flask import Flask, jsonify
 from unittest.mock import MagicMock
 from backend.routes.stocks import bp, AlphaVantageService, PortfolioService
 from backend.app import create_app, db
-from backend.app.models import User
-import requests
+from backend.app.models import User, Portfolio
+
 
 mock = MagicMock(AlphaVantageService)
 
@@ -298,3 +298,80 @@ def test_buy_stock(client, setup_database):
         response = client.post('/api/buy-stock', json=data)
         assert b'"success": false' in response.data
         assert b'"error": "Insufficient funds"' in response.data
+
+
+# test for /sell-stock
+def test_sell_stock(client):
+    # dummy user
+    dummy_user = User(username="testuser", balance=100000)
+    db.session.add(dummy_user)
+    db.session.commit()
+
+    # adding shares
+    dummy_portfolio = Portfolio(
+        user_id=dummy_user.id,
+        symbol = "AAPL",
+        quantity = 100,
+        purchase_price = 150.00
+    )
+    db.session.add(dummy_portfolio)
+    db.session.commit()
+
+    # test successful selling
+    data = {"symbol": "AAPL", "quantity": 10}
+    response = client.post('/api/sell-stock', json=data)
+    assert b'"success": true' in response.data
+    assert b'"new_balance":' in response.data
+    assert b'"portfolio_value":' in response.data
+
+    # test selling all the shares
+    data = {"symbol": "AAPL", "quantity": 100}
+    response = client.post('/api/sell-stock', json=data)
+    assert b'"success": true' in response.data
+    assert b'"new_balance": 0' in response.data
+    assert b'"portfolio_value": 0' in response.data
+
+    # test not enough shares
+    data = {"symbol": "AAPL", "quantity": 23000}
+    response = client.post('/api/sell-stock', json=data)
+    assert b'"success": false' in response.data
+    assert b'"error": "Insufficient shares"' in response.data
+
+    # test selling shares of not owned stok
+    data = {"symbol": "ROK", "quantity": 10}
+    response = client.post('/api/sell-stock', json=data)
+    assert b'"success": false' in response.data
+    assert b'"error": "Insufficient shares"' in response.data
+
+    # test invalid stock symbol
+    data = {"symbol": "%^GBJ()", "quantity": 10}
+    response = client.post('/api/sell-stock', json=data)
+    assert b'"success": false' in response.data
+    assert b'"error": "Invalid stock symbol or API error"' in response.data    # add this error check
+
+    # test api rate limit reached
+    mock_alpha_vantage.get_stock_quote.return_value = {"Information": "API Rate limit reached"}
+    data = {"symbol": "AAPL", "quantity": 10}
+    response = client.post('/api/sell-stock', json=data)
+    assert response.status_code == 429
+    assert b'"success": false' in response.data
+    assert b'"error": "API rate limit reached"' in response.data
+
+    # Test invalid quantity (0)
+    response = client.post('/api/sell-stock', json={"symbol": "AAPL", "quantity": 0})
+    assert b"No shares sold" in response.data        # add this case
+
+    # Test invalid quantity (negative)
+    response = client.post('/api/sell-stock', json={"symbol": "AAPL", "quantity": -10})
+    assert response.status_code == 400
+    assert b"Invalid quantity" in response.data       # add this case
+
+    # Test missing JSON fields (symbol)
+    response = client.post('/api/sell-stock', json={"quantity": 10})
+    assert response.status_code == 400
+    assert b"Missing required fields" in response.data        # add this case
+
+    # Test missing JSON fields (quantity)
+    response = client.post('/api/sell-stock', json={"symbol": "AAPL"})
+    assert response.status_code == 400
+    assert b"Missing required fields" in response.data          # add this case
