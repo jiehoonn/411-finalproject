@@ -17,4 +17,4 @@ class PortfolioService:
         """
         quote = self.alpha_vantage.get_stock_quote(stock.symbol)
         current_price = float(quote['Global Quote']['05. price'])
-        return current_price * stock.shares
+        return current_price * stock.quanity
