@@ -375,3 +375,40 @@ def test_sell_stock(client):
     response = client.post('/api/sell-stock', json={"symbol": "AAPL"})
     assert response.status_code == 400
     assert b"Missing required fields" in response.data          # add this case
+
+
+
+# test for /portfolio-status
+def test_portfolio_status_with_shares(client):
+    #dummy user
+    dummy_user = User(username="testuser", balance=100000)
+    db.session.add(dummy_user)
+    db.session.commit()
+
+    # adding shares
+    dummy_portfolio = Portfolio(
+        user_id=dummy_user.id,
+        symbol="AAPL",
+        quantity=50,
+        purchase_price=150.00
+    )
+    db.session.add(dummy_portfolio)
+    db.session.commit()
+
+    # testing succcessful calculation
+    response = client.get(f'/api/portfolio-status/')
+    assert b'"balance": 992,500' in response.data
+    assert b'"portfolio_value": 7,500' in response.data
+
+
+# test for /portfolio-status
+def test_portfolio_status_with_no_shares(client):
+    #dummy user
+    dummy_user = User(username="testuser", balance=100000)
+    db.session.add(dummy_user)
+    db.session.commit()
+
+    # testing 0 shares calc
+    response = client.get(f'/api/portfolio-status/')
+    assert b'"balance": 100,000' in response.data
+    assert b'"portfolio_value": 0' in response.data
