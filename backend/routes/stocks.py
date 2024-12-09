@@ -4,6 +4,7 @@ from services.alpha_vantage import AlphaVantageService
 from datetime import datetime, timedelta
 import requests
 from services.portfolio import PortfolioService
+from app.models import User, Portfolio, db
 
 
 bp = Blueprint('stocks', __name__)
@@ -159,13 +160,3 @@ def historical_data():
             main_data.append({"date": date,"close": float(stats["4. close"])})
 
     return jsonify(main_data)
-
-
-
-@bp.route('/market-status', methods=['GET'])
-def get_market_status():
-    try:
-        market_status_data = alpha_vantage.get_global_market_status()
-        return jsonify(market_status_data)
-    except requests.exceptions.RequestException as e:
-        return jsonify({"error": f"Error getting market status: {str(e)}"}), 500
