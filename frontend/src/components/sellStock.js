@@ -1,12 +1,12 @@
 import React from "react";
 import { Form, Input, Button, message } from "antd";
 
-function SellStock({ fetchBalanceAndPortfolio }) {
+function SellStock() {
   const [form] = Form.useForm();
 
   const onFinish = async (values) => {
     try {
-      const response = await fetch('/api/sell-stock', {
+      const response = await fetch('http://127.0.0.1:5000/api/sell-stock', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -14,11 +14,10 @@ function SellStock({ fetchBalanceAndPortfolio }) {
         body: JSON.stringify(values),
       });
       const data = await response.json();
-
+      
       if (data.success) {
         message.success('Stock sold successfully');
         form.resetFields();
-        fetchBalanceAndPortfolio();
       } else {
         message.error(data.error);
       }

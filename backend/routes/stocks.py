@@ -239,6 +239,9 @@ def sell_stock():
     quantity = int(data.get('quantity'))
     
     quote = alpha_vantage.get_stock_quote(symbol)
+    if 'Information' in quote:
+        return jsonify({'success': False, 'error': 'API rate limit reached'}), 429
+        
     current_price = float(quote['Global Quote']['05. price'])
     total_value = current_price * quantity
     
@@ -254,13 +257,16 @@ def sell_stock():
             
         db.session.commit()
         
+        total_portfolio_value = sum(portfolio_service.calculate_holding_value(pos) for pos in user.portfolio)
+        
         return jsonify({
             'success': True,
             'new_balance': user.balance,
-            'portfolio_value': portfolio_service.calculate_holding_value(user.id)
+            'portfolio_value': total_portfolio_value
         })
     
     return jsonify({'success': False, 'error': 'Insufficient shares'})
+
 
 @bp.route('/api/portfolio-status')
 def get_portfolio_status():

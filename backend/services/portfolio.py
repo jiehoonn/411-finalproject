@@ -6,15 +6,16 @@ class PortfolioService:
     def __init__(self):
         self.alpha_vantage = AlphaVantageService()
 
-    def calculate_holding_value(self, stock: Stock) -> float:
-        """Calculate current value of a stock holding
-
-        Args:
-            stock: Stock model instance
-
-        Returns:
-            Current value of the holding based on latest price
-        """
+    def calculate_holding_value(self, stock):
         quote = self.alpha_vantage.get_stock_quote(stock.symbol)
+        
+        if 'Information' in quote:
+            # Return last known price if API limit reached
+            return stock.purchase_price * stock.quantity
+            
+        if 'Global Quote' not in quote:
+            return stock.purchase_price * stock.quantity
+            
         current_price = float(quote['Global Quote']['05. price'])
         return current_price * stock.quantity
+
