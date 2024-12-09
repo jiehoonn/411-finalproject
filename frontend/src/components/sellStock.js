@@ -1,7 +1,7 @@
 import React from "react";
 import { Form, Input, Button, message } from "antd";
 
-function SellStock() {
+function SellStock({ fetchBalanceAndPortfolio }) {
   const [form] = Form.useForm();
 
   const onFinish = async (values) => {
@@ -14,10 +14,11 @@ function SellStock() {
         body: JSON.stringify(values),
       });
       const data = await response.json();
-      
+
       if (data.success) {
         message.success('Stock sold successfully');
         form.resetFields();
+        fetchBalanceAndPortfolio();
       } else {
         message.error(data.error);
       }
