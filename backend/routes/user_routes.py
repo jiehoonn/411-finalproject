@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
-from backend.app.models import db, User
+from backend.app.models import db, User, Portfolio
+import requests
 
 bp = Blueprint('user', __name__, url_prefix='/user')
 
@@ -22,3 +23,4 @@ def create_account():
     db.session.commit()
 
     return jsonify({'message': 'Account created successfully'}), 201
+

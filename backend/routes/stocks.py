@@ -4,6 +4,7 @@ from services.alpha_vantage import AlphaVantageService
 from datetime import datetime, timedelta
 import requests
 from services.portfolio import PortfolioService
+from app.models import User, Portfolio, db
 
 bp = Blueprint('stocks', __name__)
 CORS(bp)
@@ -140,3 +141,101 @@ def historical_data():
             main_data.append({"date": date,"close": float(stats["4. close"])})
 
     return jsonify(main_data)
+
+@bp.route('/api/buy-stock', methods=['POST'])
+def buy_stock():
+    data = request.json
+    symbol = data.get('symbol')
+    quantity = int(data.get('quantity'))
+    
+    print(f"Attempting to buy {quantity} shares of {symbol}")  # Debug print
+
+    quote = alpha_vantage.get_stock_quote(symbol)
+    print(f"API Response: {quote}")  # Debug print
+
+    if 'Information' in quote:
+        return jsonify({'success': False, 'error': 'API rate limit reached. Please try again later.'}), 429
+        
+    if 'Global Quote' not in quote:
+        return jsonify({'success': False, 'error': 'Invalid stock symbol or API error'}), 400
+
+    current_price = float(quote['Global Quote']['05. price'])
+    total_cost = current_price * quantity
+    
+    user = User.query.first()
+    print(f"User balance before purchase: {user.balance}")  # Debug print
+    
+    if user.balance >= total_cost:
+        existing_position = Portfolio.query.filter_by(
+            user_id=user.id, symbol=symbol
+        ).first()
+        
+        if existing_position:
+            existing_position.quantity += quantity
+        else:
+            new_position = Portfolio(
+                user_id=user.id,
+                symbol=symbol,
+                quantity=quantity,
+                purchase_price=current_price
+            )
+            db.session.add(new_position)
+            
+        user.balance -= total_cost
+        db.session.commit()
+        
+        total_value = sum(portfolio_service.calculate_holding_value(pos) for pos in user.portfolio)
+        
+        return jsonify({
+            'success': True,
+            'new_balance': user.balance,
+            'portfolio_value': total_value
+        })
+    
+    return jsonify({'success': False, 'error': 'Insufficient funds'})
+
+
+@bp.route('/api/sell-stock', methods=['POST'])
+def sell_stock():
+    data = request.json
+    symbol = data.get('symbol')
+    quantity = int(data.get('quantity'))
+    
+    quote = alpha_vantage.get_stock_quote(symbol)
+    current_price = float(quote['Global Quote']['05. price'])
+    total_value = current_price * quantity
+    
+    user = User.query.first()
+    position = Portfolio.query.filter_by(user_id=user.id, symbol=symbol).first()
+    
+    if position and position.quantity >= quantity:
+        position.quantity -= quantity
+        user.balance += total_value
+        
+        if position.quantity == 0:
+            db.session.delete(position)
+            
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'new_balance': user.balance,
+            'portfolio_value': portfolio_service.calculate_holding_value(user.id)
+        })
+    
+    return jsonify({'success': False, 'error': 'Insufficient shares'})
+
+@bp.route('/api/portfolio-status')
+def get_portfolio_status():
+    user = User.query.first()
+    print(f"User balance: {user.balance}")  # Debug print
+    
+    # Calculate total portfolio value
+    total_value = 0
+    for position in user.portfolio:
+        total_value += portfolio_service.calculate_holding_value(position)
+    
+    return jsonify({
+        'balance': user.balance,
+        'portfolio_value': total_value
+    })
