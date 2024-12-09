@@ -72,20 +72,6 @@ def lookup_stock():
         return jsonify({"error": f"Error getting price: {str(e)}"}), 500
 
     try:
-        hist_data = alpha_vantage.get_time_series_daily(symbol)
-        if "Time Series (Daily)" not in hist_data:
-            return jsonify({"error": "No historical data found for given symbol"}), 404
-
-        daily_data = hist_data["Time Series (Daily)"]
-        last_7_days = [
-            {"date": date, "close": values["4. close"]}
-            for date, values in list(daily_data.items())[:7]
-        ]
-
-    except requests.exceptions.RequestException as e:
-        return jsonify({"error": f"Error fetching historical data: {str(e)}"}), 500
-
-    try:
         # get market status data
         md = alpha_vantage.get_market_status()
         ms = []
@@ -106,7 +92,6 @@ def lookup_stock():
         "symbol": symbol,
         "current_price": current_price,
         "volume": volume,
-        "last_7_days": last_7_days,
         "market_status": ms
     }
 
@@ -184,7 +169,7 @@ def buy_stock():
     data = request.json
     symbol = data.get('symbol')
     quantity = int(data.get('quantity'))
-    
+
     print(f"Attempting to buy {quantity} shares of {symbol}")  # Debug print
 
     quote = alpha_vantage.get_stock_quote(symbol)
@@ -192,21 +177,21 @@ def buy_stock():
 
     if 'Information' in quote:
         return jsonify({'success': False, 'error': 'API rate limit reached. Please try again later.'}), 429
-        
+
     if 'Global Quote' not in quote:
         return jsonify({'success': False, 'error': 'Invalid stock symbol or API error'}), 400
 
     current_price = float(quote['Global Quote']['05. price'])
     total_cost = current_price * quantity
-    
+
     user = User.query.first()
     print(f"User balance before purchase: {user.balance}")  # Debug print
-    
+
     if user.balance >= total_cost:
         existing_position = Portfolio.query.filter_by(
             user_id=user.id, symbol=symbol
         ).first()
-        
+
         if existing_position:
             existing_position.quantity += quantity
         else:
@@ -217,18 +202,18 @@ def buy_stock():
                 purchase_price=current_price
             )
             db.session.add(new_position)
-            
+
         user.balance -= total_cost
         db.session.commit()
-        
+
         total_value = sum(portfolio_service.calculate_holding_value(pos) for pos in user.portfolio)
-        
+
         return jsonify({
             'success': True,
             'new_balance': user.balance,
             'portfolio_value': total_value
         })
-    
+
     return jsonify({'success': False, 'error': 'Insufficient funds'})
 
 
@@ -237,34 +222,34 @@ def sell_stock():
     data = request.json
     symbol = data.get('symbol')
     quantity = int(data.get('quantity'))
-    
+
     quote = alpha_vantage.get_stock_quote(symbol)
     if 'Information' in quote:
         return jsonify({'success': False, 'error': 'API rate limit reached'}), 429
-        
+
     current_price = float(quote['Global Quote']['05. price'])
     total_value = current_price * quantity
-    
+
     user = User.query.first()
     position = Portfolio.query.filter_by(user_id=user.id, symbol=symbol).first()
-    
+
     if position and position.quantity >= quantity:
         position.quantity -= quantity
         user.balance += total_value
-        
+
         if position.quantity == 0:
             db.session.delete(position)
-            
+
         db.session.commit()
-        
+
         total_portfolio_value = sum(portfolio_service.calculate_holding_value(pos) for pos in user.portfolio)
-        
+
         return jsonify({
             'success': True,
             'new_balance': user.balance,
             'portfolio_value': total_portfolio_value
         })
-    
+
     return jsonify({'success': False, 'error': 'Insufficient shares'})
 
 
@@ -272,12 +257,12 @@ def sell_stock():
 def get_portfolio_status():
     user = User.query.first()
     print(f"User balance: {user.balance}")  # Debug print
-    
+
     # Calculate total portfolio value
     total_value = 0
     for position in user.portfolio:
         total_value += portfolio_service.calculate_holding_value(position)
-    
+
     return jsonify({
         'balance': user.balance,
         'portfolio_value': total_value
