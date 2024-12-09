@@ -9,7 +9,13 @@ bcrypt = Bcrypt()
 
 def create_app():
     app = Flask(__name__)
-    CORS(app, origins="http://127.0.0.1:3000", supports_credentials=True)
+    CORS(app, resources={
+        r"/*": {
+            "origins": "http://localhost:3000",
+            "methods": ["GET", "POST", "OPTIONS"],
+            "allow_headers": ["Content-Type"]
+        }
+    })
     app.config.from_object(Config)
     
     db.init_app(app)
@@ -19,3 +25,4 @@ def create_app():
     app.register_blueprint(stocks_bp)
     
     return app
+
