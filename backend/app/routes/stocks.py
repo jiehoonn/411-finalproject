@@ -228,90 +228,90 @@ def buy_stock():
     user_id = data.get('userId')
 
     if not symbol or quantity <= 0 or not user_id:
-        return jsonify({'success': False, 'error': 'Invalid input'}), 400
+        return jsonify({'success': False, 'error': 'Invalid input'}), 400
 
-    quote = alpha_vantage.get_stock_quote(symbol)
-    if 'Global Quote' not in quote:
-        return jsonify({'success': False, 'error': 'Invalid stock symbol'}), 400
+    quote = alpha_vantage.get_stock_quote(symbol)
+    if 'Global Quote' not in quote:
+        return jsonify({'success': False, 'error': 'Invalid stock symbol'}), 400
 
-    current_price = float(quote['Global Quote']['05. price'])
-    total_cost = current_price * quantity
+    current_price = float(quote['Global Quote']['05. price'])
+    total_cost = current_price * quantity
 
-    user = User.query.get(user_id)
-    if not user:
-        return jsonify({'success': False, 'error': 'User not found'}), 404
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'success': False, 'error': 'User not found'}), 404
 
-    if user.balance < total_cost:
-        return jsonify({'success': False, 'error': 'Insufficient funds'}), 400
+    if user.balance < total_cost:
+        return jsonify({'success': False, 'error': 'Insufficient funds'}), 400
 
-    try:
-        # Update or create position
-        position = Portfolio.query.filter_by(user_id=user.id, symbol=symbol).first()
-        if position:
-            position.quantity += quantity
-        else:
-            position = Portfolio(
-                user_id=user.id,
-                symbol=symbol,
-                quantity=quantity,
-                purchase_price=current_price
-            )
-            db.session.add(position)
+    try:
+        # Update or create position
+        position = Portfolio.query.filter_by(user_id=user.id, symbol=symbol).first()
+        if position:
+            position.quantity += quantity
+        else:
+            position = Portfolio(
+                user_id=user.id,
+                symbol=symbol,
+                quantity=quantity,
+                purchase_price=current_price
+            )
+            db.session.add(position)
 
-        user.balance -= total_cost
-        db.session.commit()
+        user.balance -= total_cost
+        db.session.commit()
 
-        return jsonify({
-            'success': True,
-            'new_balance': user.balance,
-            'portfolio_value': total_cost
-        })
+        return jsonify({
+            'success': True,
+            'new_balance': user.balance,
+            'portfolio_value': total_cost
+        })
 
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'success': False, 'error': str(e)}), 500
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @bp.route('/api/sell-stock', methods=['POST'])
 def sell_stock():
-    """Sell stock endpoint"""
-    data = request.json
-    symbol = data.get('symbol')
-    quantity = int(data.get('quantity', 0))
-    user_id = data.get('userId')
+    """Sell stock endpoint"""
+    data = request.json
+    symbol = data.get('symbol')
+    quantity = int(data.get('quantity', 0))
+    user_id = data.get('userId')
 
-    if not symbol or quantity <= 0 or not user_id:
-        return jsonify({'success': False, 'error': 'Invalid input'}), 400
+    if not symbol or quantity <= 0 or not user_id:
+        return jsonify({'success': False, 'error': 'Invalid input'}), 400
 
-    user = User.query.get(user_id)
-    if not user:
-        return jsonify({'success': False, 'error': 'User not found'}), 404
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'success': False, 'error': 'User not found'}), 404
 
-    position = Portfolio.query.filter_by(user_id=user.id, symbol=symbol).first()
-    if not position or position.quantity < quantity:
-        return jsonify({'success': False, 'error': 'Insufficient shares'}), 400
+    position = Portfolio.query.filter_by(user_id=user.id, symbol=symbol).first()
+    if not position or position.quantity < quantity:
+        return jsonify({'success': False, 'error': 'Insufficient shares'}), 400
 
-    quote = alpha_vantage.get_stock_quote(symbol)
-    if 'Global Quote' not in quote:
-        return jsonify({'success': False, 'error': 'Invalid stock symbol'}), 400
+    quote = alpha_vantage.get_stock_quote(symbol)
+    if 'Global Quote' not in quote:
+        return jsonify({'success': False, 'error': 'Invalid stock symbol'}), 400
 
-    current_price = float(quote['Global Quote']['05. price'])
-    total_value = current_price * quantity
+    current_price = float(quote['Global Quote']['05. price'])
+    total_value = current_price * quantity
 
-    try:
-        position.quantity -= quantity
-        user.balance += total_value
+    try:
+        position.quantity -= quantity
+        user.balance += total_value
 
-        if position.quantity == 0:
-            db.session.delete(position)
+        if position.quantity == 0:
+            db.session.delete(position)
 
-        db.session.commit()
+        db.session.commit()
 
-        return jsonify({
-            'success': True,
-            'new_balance': user.balance,
-            'portfolio_value': total_value
-        })
+        return jsonify({
+            'success': True,
+            'new_balance': user.balance,
+            'portfolio_value': total_value
+        })
 
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'success': False, 'error': str(e)}), 500
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500

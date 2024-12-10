@@ -6,12 +6,16 @@ function BuyStock({ fetchBalanceAndPortfolio }) {
 
   const onFinish = async (values) => {
     try {
+      const user = JSON.parse(localStorage.getItem('user'));
       const response = await fetch('http://127.0.0.1:5000/api/buy-stock', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(values),
+        body: JSON.stringify({
+          ...values,
+          userId: user.id,
+        }),
       });
       const data = await response.json();
 

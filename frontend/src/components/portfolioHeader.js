@@ -3,7 +3,7 @@ import { Card, Typography } from 'antd';
 
 const { Text } = Typography;
 
-function PortfolioHeader({ }) {
+function PortfolioHeader() {
     const [balance, setBalance] = useState(0);
     const [portfolioValue, setPortfolioValue] = useState(0);
 
@@ -14,7 +14,8 @@ function PortfolioHeader({ }) {
     }, []);
 
     const fetchBalanceAndPortfolio = async () => {
-        const response = await fetch('http://127.0.0.1:5000/api/portfolio-status');
+        const user = JSON.parse(localStorage.getItem('user'));
+        const response = await fetch(`http://127.0.0.1:5000/api/portfolio-status/${user.id}`);
         const data = await response.json();
         setBalance(data.balance);
         setPortfolioValue(data.portfolio_value);

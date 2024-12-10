@@ -1,17 +1,21 @@
 import React from "react";
 import { Form, Input, Button, message } from "antd";
 
-function SellStock() {
+function SellStock({ fetchBalanceAndPortfolio }) {
   const [form] = Form.useForm();
 
   const onFinish = async (values) => {
     try {
+      const user = JSON.parse(localStorage.getItem('user'));
       const response = await fetch('http://127.0.0.1:5000/api/sell-stock', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(values),
+        body: JSON.stringify({
+          ...values,
+          userId: user.id,
+        }),
       });
       const data = await response.json();
       
