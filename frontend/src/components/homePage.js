@@ -6,7 +6,7 @@ const HomePage = () => {
 
   return (
     <div style={{ textAlign: 'center', marginTop: '50px' }}>
-      <h1>Welcome to Stock Trading Application</h1>
+      <h1>Welcome to our Stock Trading Application</h1>
       <button onClick={() => navigate('/login')} style={{ margin: '10px', padding: '10px', backgroundColor: 'blue', color: 'white' }}>
         Login
       </button>
