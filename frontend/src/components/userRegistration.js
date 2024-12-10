@@ -9,7 +9,7 @@ const RegisterPage = () => {
   const handleRegister = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch("http://127.0.0.1:5000/user/create-account", {
+      const response = await fetch("http://localhost:3000/create-account", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
