@@ -26,7 +26,12 @@ const HistoricalData = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`http://127.0.0.1:5000/historical-data?symbol=${symbol}&range=${range}`);
+      const response = await fetch(`http://127.0.0.1:5000/historical-data?symbol=${symbol}&range=${range}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }});
+
       if (!response.ok) throw new Error("Failed to fetch historical data");
       const data = await response.json();
       const labels = data.map((entry) => entry.date);

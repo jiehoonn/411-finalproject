@@ -9,8 +9,6 @@ function PortfolioHeader({ }) {
 
     useEffect(() => {
         fetchBalanceAndPortfolio();
-        const interval = setInterval(fetchBalanceAndPortfolio, 60000);
-        return () => clearInterval(interval);
     }, []);
 
     const fetchBalanceAndPortfolio = async () => {

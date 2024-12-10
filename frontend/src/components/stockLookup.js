@@ -12,7 +12,12 @@ const StockLookup = () => {
     setError(null);
     setData(null);
     try {
-      const response = await fetch(`http://127.0.0.1:5000/lookup-stock?symbol=${symbol}`);
+      const response = await fetch(`http://127.0.0.1:5000/lookup-stock?symbol=${symbol}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }});
+
       if (!response.ok) throw new Error("Failed to fetch stock data");
       const result = await response.json();
       setData(result);
