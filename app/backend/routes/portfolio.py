@@ -2,7 +2,7 @@
 from flask import Blueprint, jsonify, request
 from models.user import User
 from models.stock import Stock
-from services.portfolio import PortfolioService  # importing the PortfolioService
+from backend.services.portfolio import PortfolioService  # importing the PortfolioService
 
 portfolio_blueprint = Blueprint('portfolio', __name__)
 portfolio_service = PortfolioService()
