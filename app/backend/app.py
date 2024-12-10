@@ -1,8 +1,8 @@
 from flask import Flask
 from backend.database import db
-from backend.routes.stock import stock_blueprint
-from backend.routes.auth_routes import auth_blueprint
-from backend.routes.portfolio import portfolio_blueprint  # importing new portfolio blueprint
+from app.backend.routes.stocks import stock_blueprint
+from app.backend.routes.auth_routes import auth_blueprint
+from backend.services.portfolio import portfolio_blueprint  # importing new portfolio blueprint
 
 def create_app():
     app = Flask(__name__)
