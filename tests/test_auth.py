@@ -1,17 +1,37 @@
 import pytest
 from flask import Flask
-from backend.app.models import db, User
-from backend.app.routes.auth import bp as auth_bp
-from werkzeug.security import generate_password_hash
+from unittest.mock import patch
+from datetime import datetime
+from backend.app.models import db, User, Portfolio, StockTransaction
+from backend.app.routes.stocks import bp as stocks_bp
+from backend.app import create_app
+
+# Mock API responses
+MOCK_STOCK_PRICE = {
+    "Global Quote": {
+        "05. price": "150.00",
+        "10. change percent": "1.5000%"
+    }
+}
+
+MOCK_HISTORICAL_DATA = {
+    "Time Series (Daily)": {
+        "2024-01-01": {
+            "4. close": "150.00"
+        }
+    }
+}
 
 @pytest.fixture
 def app():
-    app = Flask(__name__)
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
-    app.config['TESTING'] = True
-    db.init_app(app)
-    app.register_blueprint(auth_bp)
-
+    """Create test Flask app"""
+    app = create_app('testing')
+    app.config.update({
+        'SQLALCHEMY_DATABASE_URI': 'sqlite:///:memory:',
+        'TESTING': True,
+        'SECRET_KEY': 'test_secret_key'
+    })
+    
     with app.app_context():
         db.create_all()
         yield app
@@ -23,102 +43,166 @@ def client(app):
     return app.test_client()
 
 @pytest.fixture
-def sample_user():
+def auth_headers(client, test_user):
+    """Create authenticated headers"""
+    response = client.post('/api/auth/login', json={
+        'username': test_user['username'],
+        'password': test_user['password']
+    })
+    token = response.get_json()['token']
+    return {'Authorization': f'Bearer {token}'}
+
+@pytest.fixture
+def test_user():
+    """Create test user with balance"""
     return {
-        "username": "testuser",
-        "email": "testuser@example.com",
-        "password": "securepassword123"
+        'username': 'testtrader',
+        'email': 'trader@test.com',
+        'password': 'Test123!',
+        'balance': 10000.00
     }
 
-##########################################################
-# User Registration
-##########################################################
+class TestStockPurchase:
+    @patch('backend.app.routes.stocks.get_stock_price')
+    def test_successful_stock_purchase(self, mock_price, client, auth_headers, test_user):
+        """Test buying stocks successfully"""
+        mock_price.return_value = float(MOCK_STOCK_PRICE['Global Quote']['05. price'])
+        
+        response = client.post('/api/stocks/buy', 
+            json={
+                'symbol': 'AAPL',
+                'quantity': 10
+            },
+            headers=auth_headers
+        )
+        
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data['message'] == 'Stock purchased successfully'
+        assert 'transaction_id' in data
+        
+        # Verify portfolio update
+        portfolio = Portfolio.query.filter_by(user_id=test_user['id']).first()
+        assert portfolio.quantity == 10
+        assert portfolio.symbol == 'AAPL'
 
-def test_register_user_success(client, sample_user):
-    """Test registering a new user successfully."""
-    response = client.post('/api/auth/register', json=sample_user)
-    assert response.status_code == 201, "User should be registered successfully."
-    data = response.get_json()
-    assert data['user']['username'] == sample_user['username'], "Username should match the input."
-    assert data['user']['email'] == sample_user['email'], "Email should match the input."
+    def test_insufficient_funds(self, client, auth_headers):
+        """Test buying stocks with insufficient funds"""
+        response = client.post('/api/stocks/buy',
+            json={
+                'symbol': 'AAPL',
+                'quantity': 1000
+            },
+            headers=auth_headers
+        )
+        
+        assert response.status_code == 400
+        assert 'Insufficient funds' in response.get_json()['error']
 
-def test_register_user_missing_fields(client):
-    """Test registering a user with missing fields."""
-    response = client.post('/api/auth/register', json={"username": "testuser"})
-    assert response.status_code == 400, "Missing fields should result in a 400 error."
-    data = response.get_json()
-    assert "error" in data, "Error message should be returned."
+class TestStockSale:
+    @patch('backend.app.routes.stocks.get_stock_price')
+    def test_successful_stock_sale(self, mock_price, client, auth_headers):
+        """Test selling stocks successfully"""
+        mock_price.return_value = float(MOCK_STOCK_PRICE['Global Quote']['05. price'])
+        
+        # First buy some stocks
+        client.post('/api/stocks/buy',
+            json={'symbol': 'AAPL', 'quantity': 10},
+            headers=auth_headers
+        )
+        
+        # Then sell them
+        response = client.post('/api/stocks/sell',
+            json={'symbol': 'AAPL', 'quantity': 5},
+            headers=auth_headers
+        )
+        
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data['message'] == 'Stock sold successfully'
+        assert 'transaction_id' in data
 
-def test_register_user_duplicate_username(client, sample_user):
-    """Test registering a user with a duplicate username."""
-    client.post('/api/auth/register', json=sample_user)
-    response = client.post('/api/auth/register', json=sample_user)
-    assert response.status_code == 400, "Duplicate username should result in a 400 error."
-    data = response.get_json()
-    assert "error" in data, "Error message should be returned."
+        # Verify portfolio update
+        portfolio = Portfolio.query.filter_by(symbol='AAPL').first()
+        assert portfolio.quantity == 5
 
-##########################################################
-# User Login
-##########################################################
+class TestPortfolio:
+    def test_get_portfolio(self, client, auth_headers):
+        """Test retrieving user portfolio"""
+        response = client.get('/api/stocks/portfolio', headers=auth_headers)
+        
+        assert response.status_code == 200
+        data = response.get_json()
+        assert 'portfolio' in data
+        assert isinstance(data['portfolio'], list)
 
-def test_login_success(client, sample_user):
-    """Test logging in with valid credentials."""
-    client.post('/api/auth/register', json=sample_user)
-    response = client.post('/api/auth/login', json={"username": sample_user['username'], "password": sample_user['password']})
-    assert response.status_code == 200, "Valid credentials should result in a successful login."
-    data = response.get_json()
-    assert data['user']['username'] == sample_user['username'], "Username should match the input."
+    @patch('backend.app.routes.stocks.get_stock_price')
+    def test_portfolio_value(self, mock_price, client, auth_headers):
+        """Test calculating portfolio value"""
+        mock_price.return_value = float(MOCK_STOCK_PRICE['Global Quote']['05. price'])
+        
+        response = client.get('/api/stocks/portfolio/value', headers=auth_headers)
+        
+        assert response.status_code == 200
+        data = response.get_json()
+        assert 'total_value' in data
+        assert isinstance(data['total_value'], float)
 
-def test_login_invalid_credentials(client, sample_user):
-    """Test logging in with invalid credentials."""
-    client.post('/api/auth/register', json=sample_user)
-    response = client.post('/api/auth/login', json={"username": sample_user['username'], "password": "wrongpassword"})
-    assert response.status_code == 401, "Invalid credentials should result in a 401 error."
-    data = response.get_json()
-    assert "error" in data, "Error message should be returned."
+class TestStockData:
+    @patch('backend.app.routes.stocks.get_stock_price')
+    def test_get_stock_price(self, mock_price, client):
+        """Test getting current stock price"""
+        mock_price.return_value = float(MOCK_STOCK_PRICE['Global Quote']['05. price'])
+        
+        response = client.get('/api/stocks/price/AAPL')
+        
+        assert response.status_code == 200
+        data = response.get_json()
+        assert 'price' in data
+        assert isinstance(data['price'], float)
 
-def test_login_nonexistent_user(client):
-    """Test logging in with a non-existent user."""
-    response = client.post('/api/auth/login', json={"username": "nonexistentuser", "password": "password"})
-    assert response.status_code == 401, "Non-existent user should result in a 401 error."
-    data = response.get_json()
-    assert "error" in data, "Error message should be returned."
+    @patch('backend.app.routes.stocks.get_historical_data')
+    def test_get_historical_data(self, mock_historical, client):
+        """Test getting historical stock data"""
+        mock_historical.return_value = MOCK_HISTORICAL_DATA
+        
+        response = client.get('/api/stocks/historical/AAPL?days=30')
+        
+        assert response.status_code == 200
+        data = response.get_json()
+        assert 'historical_data' in data
+        assert isinstance(data['historical_data'], list)
 
-##########################################################
-# Update Password
-##########################################################
+class TestErrorHandling:
+    def test_invalid_stock_symbol(self, client, auth_headers):
+        """Test handling invalid stock symbol"""
+        response = client.post('/api/stocks/buy',
+            json={
+                'symbol': 'INVALID',
+                'quantity': 1
+            },
+            headers=auth_headers
+        )
+        
+        assert response.status_code == 400
+        assert 'Invalid stock symbol' in response.get_json()['error']
 
-def test_update_password_success(client, sample_user):
-    """Test updating the password for an existing user."""
-    client.post('/api/auth/register', json=sample_user)
-    response = client.put('/api/auth/update-password', json={
-        "username": sample_user['username'],
-        "current_password": sample_user['password'],
-        "new_password": "newpassword456"
-    })
-    assert response.status_code == 200, "Password update should be successful."
-    data = response.get_json()
-    assert "message" in data, "Success message should be returned."
+    def test_invalid_quantity(self, client, auth_headers):
+        """Test handling invalid quantity"""
+        response = client.post('/api/stocks/buy',
+            json={
+                'symbol': 'AAPL',
+                'quantity': -1
+            },
+            headers=auth_headers
+        )
+        
+        assert response.status_code == 400
+        assert 'Invalid quantity' in response.get_json()['error']
 
-def test_update_password_incorrect_current_password(client, sample_user):
-    """Test updating the password with an incorrect current password."""
-    client.post('/api/auth/register', json=sample_user)
-    response = client.put('/api/auth/update-password', json={
-        "username": sample_user['username'],
-        "current_password": "wrongpassword",
-        "new_password": "newpassword456"
-    })
-    assert response.status_code == 401, "Incorrect current password should result in a 401 error."
-    data = response.get_json()
-    assert "error" in data, "Error message should be returned."
-
-def test_update_password_user_not_found(client):
-    """Test updating the password for a non-existent user."""
-    response = client.put('/api/auth/update-password', json={
-        "username": "nonexistentuser",
-        "current_password": "password",
-        "new_password": "newpassword456"
-    })
-    assert response.status_code == 404, "Non-existent user should result in a 404 error."
-    data = response.get_json()
-    assert "error" in data, "Error message should be returned."
+    def test_missing_authentication(self, client):
+        """Test requests without authentication"""
+        response = client.get('/api/stocks/portfolio')
+        
+        assert response.status_code == 401
+        assert 'Missing authentication token' in response.get_json()['error']
