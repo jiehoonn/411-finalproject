@@ -148,12 +148,14 @@ def historical_data():
         Exception: If an error occurs while fetching the historical trend data.
     """
     symbol = request.args.get('symbol')
+    range = request.args.get('range', '1m')
+    
     if not symbol:
         logger.warning("No symbol given for historical in input!")
         return jsonify({"error": "No symbol given.."}), 400
 
     logger.info(f"Fetching historical trend data for symbol: {symbol}, range: {range}")
-    range = request.args.get('range', '1m')
+    
     range_mapping = {
         '1d': {
             'endpoint': 'TIME_SERIES_INTRADAY',

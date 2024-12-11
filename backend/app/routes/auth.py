@@ -2,7 +2,8 @@ from flask import Blueprint, request, jsonify
 from app.models import db, User
 from flask_cors import CORS
 import logging
-from logger import configure_logger
+from .logger import configure_logger
+
 
 
 logger = logging.getLogger(__name__)
@@ -31,8 +32,9 @@ def register():
             - 400: If required fields are missing or if the username or email already exists.
             - 500: If an internal server error occurs during the registration process.
     """
-    logger.info(f"Trying to register new user '{data.get('username')}'.")
     data = request.json
+    logger.info(f"Trying to register new user '{data.get('username')}'.")
+    
 
     # Validate required fields
     if not all(k in data for k in ["username", "email", "password"]):
@@ -95,8 +97,9 @@ def login():
             - 400: If required fields are missing in the request payload.
             - 401: If the provided credentials are invalid.
     """
-    logger.info(f"Trying to log in user '{data.get('username')}'.")
     data = request.json
+    logger.info(f"Trying to log in user '{data.get('username')}'.")
+    
 
     # Validate required fields
     if not all(k in data for k in ["username", "password"]):
