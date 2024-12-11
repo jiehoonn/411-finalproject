@@ -45,18 +45,6 @@ const StockLookup = () => {
           <Text>Volume: {data.volume}</Text>
 
           <Title level={5} style={{ marginTop: 16 }}>
-            Last 7 Days
-          </Title>
-          <List
-            dataSource={data.last_7_days}
-            renderItem={(day) => (
-              <List.Item>
-                {day.date}: <Text strong>${day.close}</Text>
-              </List.Item>
-            )}
-          />
-
-          <Title level={5} style={{ marginTop: 16 }}>
             Market Status
           </Title>
           {data.market_status && data.market_status.length > 0 ? (
@@ -65,8 +53,6 @@ const StockLookup = () => {
               renderItem={(market) => (
                 <List.Item>
                   <Text strong>{market.region} - {market.market_type}</Text><br />
-                  <Text>Exchanges: {market.primary_exchanges}</Text><br />
-                  <Text>Open: {market.local_open} - Close: {market.local_close}</Text><br />
                   <Text>Status: {market.current_status}</Text>
                 </List.Item>
               )}

@@ -1,22 +1,13 @@
-from flask import current_app
-import requests
 import os
+import requests
 
 class AlphaVantageService:
     def __init__(self):
-        self.api_key = os.getenv('ALPHA_VANTAGE_API_KEY') # Temporarily use os.getenv() instead of current_app
+        self.api_key = os.getenv('ALPHA_VANTAGE_API_KEY')
         self.base_url = 'https://www.alphavantage.co/query'
 
     def get_stock_quote(self, symbol):
-        """
-        Get the stock quote (data) for the given symbol.
-
-        Args:
-            symbol (str): The stock symbol.
-
-        Returns:
-            dict: The stock quote data from API.
-        """
+        """Get current stock quote"""
         params = {
             'function': 'GLOBAL_QUOTE',
             'symbol': symbol,
@@ -25,17 +16,8 @@ class AlphaVantageService:
         response = requests.get(self.base_url, params=params)
         return response.json()
 
-
     def get_time_series_daily(self, symbol):
-        """
-        Get daily time series data for the given symbol.
-
-        Args:
-            symbol (str): The stock symbol.
-
-        Returns:
-            dict: The daily time series data.
-        """
+        """Get daily time series"""
         params = {
             'function': 'TIME_SERIES_DAILY',
             'symbol': symbol,
@@ -43,7 +25,6 @@ class AlphaVantageService:
         }
         response = requests.get(self.base_url, params=params)
         return response.json()
-
 
     def get_time_series_intraday(self, symbol, interval):
         """
