@@ -107,7 +107,7 @@ def lookup_stock():
 
     logger.info("Looking up global market status")
     try:
-        md = alpha_vantage.get_market_status()
+        md = alpha_vantage.get_global_market_status()
         ms = []
         if "markets" in md:
             for m in md["markets"]:
