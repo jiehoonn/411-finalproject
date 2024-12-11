@@ -1,45 +1,39 @@
 # Stock Trading Application
 
-A powerful stock trading platform that enables individual investors to manage portfolios, execute trades, and monitor market conditions using the Alpha Vantage API.
+A stock trading platform that enables individual users to manage portfolios, make trades, and monitor market conditions using the Alpha Vantage API.
 
 ## Features
 
-### 1. View My Portfolio
+### 1. View Portfolio
 
-- Display current stock holdings
-- Show quantity and current price of each stock
-- Calculate total value of each holding
+- Display digital balance
 - Display overall portfolio value
-- **API Endpoints Used**: Quote Endpoint (fields: stock symbol, latest stock price, closing price)
+- Integration of the latest stock prices
+- **API Endpoints Used**: Quote Endpoint
 
 ### 2. Buy Stock
 
 - Purchase shares with specified stock symbol and quantity
-- Real-time market price execution
-- **API Endpoints Used**: Quote Endpoint (fields: symbol, price, latest trading day, previous close)
+- **API Endpoints Used**: Quote Endpoint 
 
 ### 3. Sell Stock
 
 - Sell shares from current holdings
-- Real-time market price execution
-- **API Endpoints Used**: Quote Endpoint (fields: symbol, price, latest trading day)
+- **API Endpoints Used**: Quote Endpoint 
 
 ### 4. Look Up Stock
 
 - Detailed stock information
-- Current market price
-- Historical price data
-- **API Endpoints Used**: Quote, Global Market Open & Close Status and Time Series Daily Endpoint
+- Current market price and volume
+- Global market status
+- **API Endpoints Used**: Quote and Global Market Open & Close Status Endpoint
 
 ### 5. Stock Trends (Historical Data)
 
 - Stock trends from the past 1 day, 10 days, 1 month, 6 month and 1 year
 - **API Endpoints Used**: Time Series Daily, Time Series Intraday and Time Series Monthly Endpoint
 
-### 6. Calculate Portfolio Value
 
-- Real-time portfolio valuation
-- Integration of the latest stock prices
 
 ## Technical Implementation
 
@@ -48,7 +42,7 @@ A powerful stock trading platform that enables individual investors to manage po
 #### User Account Management
 
 - **Routes**: `/create-account`, `/login`, `/update-password`
-- Secure password storage with hashing
+- Secure password storage with salted hashing
 - Input validation
 - SQLite database storage
 
@@ -79,7 +73,7 @@ A powerful stock trading platform that enables individual investors to manage po
 - Customizable date ranges
 - **API Endpoints Used**: Time Series Daily, Monthly, and Weekly Endpoints
 
-## Initial Setup for Team Members
+## Running the application
 
 1. **Clone the repository:**
 
@@ -93,115 +87,163 @@ A powerful stock trading platform that enables individual investors to manage po
    cd [project-name]
    ```
 
-3. **Install frontend dependencies:**
+3. **Activate the virtual environment for frontend:**
 
    ```bash
    cd frontend
-   npm install
-   ```
-
-4. **Activate the virtual environment:**
-
-   ```bash
-   cd ../app/backend
    source venv/bin/activate
    ```
 
-5. **Install backend dependencies:**
+3. **Install frontend dependencies:**
 
    ```bash
    pip install -r requirements.txt
    ```
 
-6. **Create a `.env` file in the backend directory:**
+4. **Run the React Application:**
+   ```bash
+   npm start
+   ```
+  
+
+5. **In a seperate terminal, activate the virtual environment for the backend:**
 
    ```bash
-   echo "ALPHA_VANTAGE_API_KEY=your_api_key_here" > .env
+   cd /backend
+   source venv/bin/activate
    ```
 
-   _Replace `your_api_key_here` with your actual Alpha Vantage API key._
+8. **Install backend dependencies:**
 
-## Running the Application
+   ```bash
+   pip install -r requirements.txt
+   ```
+   
 
-You will need two terminal windows to run the application.
+9.**Run the Flask Application:**
+   ```bash
+   python3 -m flask run
+   ```
 
-### Terminal 1 - Frontend:
+10. **Add your API key to the backend env file:**
 
-```bash
-cd frontend
-npm start
-```
 
-### Terminal 2 - Backend:
 
-```bash
-cd backend
-python3 -m flask run
-```
 
-## API Documentation
+## API and Database Used
 
 - [Alpha Vantage API Documentation](https://www.alphavantage.co/documentation/)
-- Key endpoints used: Quote, Time Series Daily, ...
-- Database: SQLAlchemy for data persistence.
+- Key endpoints used: Quote, Time Series Daily, Time Series IntraDay, Time Series Monthly and Global Market Open & Close Status 
+- Database: SQLAlchemy
 
 
 ## Route Documentation
 
-### 1. Create Account
+### 1. Register
 
-- **Route**: `/create-account`  
+- **Route**: `/register  
 - **Request Type**: POST  
-- **Purpose**: Creates a new user account with a username and password.  
+- **Purpose**: Creates a new user account with a username, email and password.  
 
-#### Request Body:
+**Request Body**:  
+- `username` (String): The username of the user.  
+- `email` (String): The email address of the user.  
+- `password` (String): The password of the user.  
+
+#### Response Format: JSON
+**Success Response Example:**
+- Code: 200
+- Content:
+```json
+  {
+      "message": "User registered successfully",
+      "user": {
+          "username": "newuser123",
+          "email": "newuser123@example.com",
+          "balance": 1000000.0
+      }
+  }
+  ```
+#### **Example Request**:  
 ```json
 {
-  "username": "newuser123",
-  "password": "securepassword"
+    "username": "newuser123",
+    "email": "newuser123@example.com",
+    "password": "pass123"
 }
-```
+```  
 
-#### Response Format:
-**Success Response:**
+#### **Example Response**:  
 ```json
 {
-  "message": "Account created successfully",
-  "status": "200"
+    "message": "User registered successfully",
+    "user": {
+        "username": "newuser123",
+        "email": "newuser123@example.com",
+        "balance": 1000000.0
+    }
 }
 ```
-
 ---
 
 ### 2. Login
 
 - **Route**: `/login`  
 - **Request Type**: POST  
-- **Purpose**: Authenticates an existing user with their username and password.  
+- **Purpose**: Used to authenticate an existing user with their username and password.  
 
-#### Request Body:
+#### **Request Body**:  
+- `username` (String): The username of the user.  
+- `password` (String): The password of the user.
+
+#### **Response Format**: JSON  
+
+##### **Success Response Example**:  
+- **Code**: 200  
+- **Content**:  
+  ```json
+  {
+      "message": "Login successful",
+      "user": {
+          "id": 1,
+          "username": "existinguser",
+          "email": "existinguser@example.com",
+          "balance": 1000000.0
+      }
+  }
+  ```
+
+##### **Error Responses**:  
+1. **Code**: 400  
+   **Content**:  
+   ```json
+   { "error": "Missing required fields" }
+   ```  
+
+2. **Code**: 401  
+   **Content**:  
+   ```json
+   { "error": "Invalid credentials" }
+   ``` 
+
+#### **Example Request**:  
 ```json
 {
-  "username": "existinguser",
-  "password": "userpassword"
+    "username": "existinguser",
+    "password": "password123"
 }
-```
+```  
 
-#### Response Format:
-**Success Response:**
+#### **Example Response**:  
 ```json
 {
-  "message": "Login successful",
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
-  "status": "200"
-}
-```
-
-**Error Response:**
-```json
-{
-  "message": "Invalid credentials",
-  "status": "401"
+    "message": "Login successful",
+    "user": {
+        "id": 1,
+        "username": "existinguser",
+        "email": "existinguser@example.com",
+        "balance": 1000000.0
+    }
 }
 ```
 
@@ -213,176 +255,449 @@ python3 -m flask run
 - **Request Type**: POST  
 - **Purpose**: Allows a user to update their password.  
 
-#### Request Body:
-```json
-{
-  "username": "existinguser",
-  "old_password": "oldpassword",
-  "new_password": "newsecurepassword"
-}
-```
+#### **Request Body**:  
+- `username` (String): The username of the user.  
+- `current_password` (String): The user's current password.  
+- `new_password` (String): The new password.  
 
-#### Response Format:
-**Success Response:**
-```json
-{
-  "message": "Password updated successfully",
-  "status": "200"
-}
-```
+#### **Response Format**: JSON  
 
-**Error Response:**
+##### **Success Response Example**:  
+- **Code**: 200  
+- **Content**:  
+  ```json
+  {
+      "message": "Password updated successfully"
+  }
+  ```  
+
+##### **Error Responses**:  
+1. **Code**: 400  
+   **Content**:  
+   ```json
+   { "error": "Missing required fields" }
+   ```  
+
+2. **Code**: 404  
+   **Content**:  
+   ```json
+   { "error": "User not found" }
+   ```  
+
+3. **Code**: 401  
+   **Content**:  
+   ```json
+   { "error": "Current password is incorrect" }
+   ```
+
+#### **Example Request**:  
 ```json
 {
-  "message": "Invalid credentials",
-  "status": "401"
+    "username": "existinguser",
+    "current_password": "oldpassword",
+    "new_password": "newsecurepassword"
+}
+```  
+
+#### **Example Response**:  
+```json
+{
+    "message": "Password updated successfully"
 }
 ```
 
 ---
 
-### 4. Portfolio Overview
+### Get Stock Quote
 
-- **Route**: `/portfolio`  
+- **Route**: `/api/stock/quote/<symbol>`
 - **Request Type**: GET  
-- **Purpose**: Retrieves the user's current portfolio, including holdings and their values.  
+- **Purpose**: Fetches the current stock data for the given stock symbol.
 
-#### Response Format:
-**Success Response:**
+#### **Path Parameters**:  
+- `symbol` (String): The stock symbol for which data is to be fetched.  
+
+#### **Response Format**: JSON  
+
+##### **Success Response Example**:  
+- **Code**: 200  
+- **Content**:  
+  ```json
+  {
+      "Global Quote": {
+          "01. symbol": "AAPL",
+          "05. price": "150.00",
+          "06. volume": "1000000"
+      }
+  }
+  ```  
+
+##### **Error Responses**:  
+1. **Code**: 500  
+   **Content**:  
+   ```json
+   { "error": "Failed to fetch stock quote" }
+   ```
+
+   #### **Example Request**:  
+```http
+GET host/api/stock/quote/IBM
+```
+
+#### **Example Response**:  
 ```json
 {
-  "portfolio": [
-    {
+   "Global Quote": {
+   "01. symbol": "IBM",
+   "02. open": "228.4000",
+   "03. high": "234.3900",
+   "04. low": "227.8000",
+   "05. price": "231.7200",
+   "06. volume": "4769531",
+   "07. latest trading day": "2024-12-10",
+   "08. previous close": "230.0000",
+   "09. change": "1.7200",
+   "10. change percent": "0.7478%"
+   }
+}
+```
+
+---
+
+### Calculate Value
+
+- **Route**: `/api/stock/value/<symbol>/<int:shares>`
+- **Request Type**: GET  
+- **Purpose**: Calculates the total value of a stock position based on the current stock price and the number of shares.
+
+#### **Path Parameters**:  
+- `symbol` (String): The stock symbol.  
+- `shares` (Integer): The number of shares owned.  
+
+#### **Response Format**: JSON  
+
+##### **Success Response Example**:  
+- **Code**: 200  
+- **Content**:  
+  ```json
+  {
+      "value": 3000.0
+  }
+  ```  
+
+##### **Error Responses**:  
+1. **Code**: 500  
+   **Content**:  
+   ```json
+   { "error": "Failed to calculate stock value" }
+   ```
+   
+#### **Example Request**:  
+```http
+GET /api/stock/value/AAPL/20 HTTP/1.1
+Host: example.com
+```
+
+#### **Example Response**:  
+```json
+{
+    "value": 3000.0
+}
+```
+---
+
+### Lookup Stock
+
+- **Route**: `\lookup-stock`
+- **Request Type**: GET  
+- **Purpose**: Fetches the current stock data and market status for a specified stock symbol.
+
+#### **Query Parameters**:  
+- `symbol` (String): The stock symbol to look up.  
+
+#### **Response Format**: JSON  
+
+##### **Success Response Example**:  
+- **Code**: 200  
+- **Content**:  
+  ```json
+  {
       "symbol": "AAPL",
-      "quantity": 10,
-      "price": 150.50,
-      "total_value": 1505.00
-    },
-    {
-      "symbol": "GOOG",
-      "quantity": 5,
-      "price": 2800.00,
-      "total_value": 14000.00
-    }
-  ],
-  "total_portfolio_value": 15505.00,
-  "status": "200"
+      "current_price": "150.00",
+      "volume": "1000000",
+      "market_status": [
+          {
+              "market_type": "Stock Market",
+              "region": "US",
+              "current_status": "Open"
+          }
+      ]
+  }
+  ```  
+
+##### **Error Responses**:  
+1. **Code**: 400  
+   **Content**:  
+   ```json
+   { "error": "No symbol given" }
+   ```
+
+2. **Code**: 404  
+   **Content**:  
+   ```json
+   { "error": "No data found for the given symbol" }
+   ```
+
+3. **Code**: 500  
+   **Content**:  
+   ```json
+   { "error": "Error getting stock data" }
+   ```
+
+#### **Example Request**:  
+```http
+GET host/lookup-stock?symbol=AAPL
+```
+
+#### **Example Response**:  
+```json
+{
+    "symbol": "AAPL",
+    "current_price": "150.00",
+    "volume": "1000000",
+    "market_status": [
+        {
+            "market_type": "Stock Market",
+            "region": "US",
+            "current_status": "Open"
+        }
+    ]
 }
 ```
+
 
 ---
 
-### 5. Buy Stock
+### Historical Data
 
-- **Route**: `/buy-stock`  
-- **Request Type**: POST  
-- **Purpose**: Allows the user to purchase a specified quantity of a stock.  
-
-#### Request Body:
-```json
-{
-  "symbol": "AAPL",
-  "quantity": 5
-}
-```
-
-#### Response Format:
-**Success Response:**
-```json
-{
-  "message": "Stock purchased successfully",
-  "status": "200"
-}
-```
-
-**Error Response:**
-```json
-{
-  "message": "Insufficient funds",
-  "status": "400"
-}
-```
-
----
-
-### 6. Sell Stock
-
-- **Route**: `/sell-stock`  
-- **Request Type**: POST  
-- **Purpose**: Allows the user to sell a specified quantity of a stock.  
-
-#### Request Body:
-```json
-{
-  "symbol": "AAPL",
-  "quantity": 5
-}
-```
-
-#### Response Format:
-**Success Response:**
-```json
-{
-  "message": "Stock sold successfully",
-  "status": "200"
-}
-```
-
-**Error Response:**
-```json
-{
-  "message": "Insufficient stock quantity",
-  "status": "400"
-}
-```
-
----
-
-### 7. Lookup Stock
-
-- **Route**: `/lookup-stock`  
+- **Route**: `\historical-data``
 - **Request Type**: GET  
-- **Purpose**: Retrieves detailed information about a specific stock.  
+- **Purpose**: Fetches historical trend data for the specified stock symbol within a given time range.
 
-#### Query Parameters:
-- `symbol` (String): Stock symbol to look up.
+#### **Query Parameters**:  
+- `symbol` (String): The stock symbol.  
+- `range` (String): The time range (e.g., '1d', '10d', '1m'). Defaults to '1m'.  
 
-#### Response Format:
-**Success Response:**
+#### **Response Format**: JSON  
+
+##### **Success Response Example**:  
+- **Code**: 200  
+- **Content**:  
+  ```json
+  [
+      { "date": "2023-12-01", "close": 150.0 },
+      { "date": "2023-12-02", "close": 152.0 }
+  ]
+  ```  
+
+##### **Error Responses**:  
+1. **Code**: 400  
+   **Content**:  
+   ```json
+   { "error": "No symbol given" }
+   ```
+
+2. **Code**: 500  
+   **Content**:  
+   ```json
+   { "error": "Failed to fetch historical trend data" }
+   ```
+
+#### **Example Request**:  
+```http
+GET host/historical-data?symbol=AAPL&range=1m 
+```
+
+#### **Example Response**:  
+```json
+[
+    { "date": "2023-12-01", "close": 150.0 },
+    { "date": "2023-12-02", "close": 152.0 }
+]
+```
+
+---
+
+### Portfolio Status
+
+- **Route**: `/api/portfolio-status/<int:user_id>`
+- **Request Type**: GET  
+- **Purpose**: Fetches the portfolio status for a user, including account balance and portfolio value.
+
+#### **Path Parameters**:  
+- `user_id` (Integer): The user ID.  
+
+#### **Response Format**: JSON  
+
+##### **Success Response Example**:  
+- **Code**: 200  
+- **Content**:  
+  ```json
+  {
+      "balance": 1000.0,
+      "portfolio_value": 5000.0
+  }
+  ```  
+
+##### **Error Responses**:  
+1. **Code**: 404  
+   **Content**:  
+   ```json
+   { "error": "No user found" }
+   ```
+
+#### **Example Request**:  
+```http
+GET /api/portfolio-status/1 HTTP/1.1
+Host: example.com
+```
+
+#### **Example Response**:  
 ```json
 {
-  "symbol": "AAPL",
-  "price": 150.50,
-  "open": 148.00,
-  "close": 149.50,
-  "high": 151.00,
-  "low": 147.50,
-  "status": "200"
+    "balance": 1000.0,
+    "portfolio_value": 5000.0
 }
 ```
 
 ---
 
-### 8. Historical Data
+### Buy Stock
 
-- **Route**: `/historical-data`  
-- **Request Type**: GET  
-- **Purpose**: Retrieves historical data for a stock over a specified period.  
+- **Route**: - `/api/buy-stock`
+- **Request Type**: POST  
+- **Purpose**: Buys stock(s) for a user and updates their portfolio value and account balance.
 
-#### Query Parameters:
-- `symbol` (String): Stock symbol.
-- `range` (String): Time range (e.g., `1d`, `10d`, `1m`, `6m`, `1y`).
+#### **Request Body**:  
+- `symbol` (String): The stock symbol.  
+- `quantity` (Integer): The number of shares to buy.  
+- `userId` (Integer): The user ID.  
 
-#### Response Format:
-**Success Response:**
+#### **Response Format**: JSON  
+
+##### **Success Response Example**:  
+- **Code**: 200  
+- **Content**:  
+  ```json
+  {
+      "success": true,
+      "new_balance": 900.0,
+      "portfolio_value": 1500.0
+  }
+  ```  
+
+##### **Error Responses**:  
+1. **Code**: 400  
+   **Content**:  
+   ```json
+   { "success": false, "error": "Invalid input" }
+   ```
+
+2. **Code**: 404  
+   **Content**:  
+   ```json
+   { "success": false, "error": "User not found" }
+   ```
+
+3. **Code**: 400  
+   **Content**:  
+   ```json
+   { "success": false, "error": "Insufficient funds" }
+   ```
+#### **Example Request**:  
+```http
+POST /api/buy-stock HTTP/1.1
+Host: example.com
+Content-Type: application/json
+
+{
+    "symbol": "AAPL",
+    "quantity": 10,
+    "userId": 1
+}
+```
+
+#### **Example Response**:  
 ```json
 {
-  "symbol": "AAPL",
-  "historical_data": [
-    { "date": "2024-12-01", "close": 150.50 },
-    { "date": "2024-12-02", "close": 149.50 }
-  ],
-  "status": "200"
+    "success": true,
+    "new_balance": 900.0,
+    "portfolio_value": 1500.0
 }
-
 ```
+
+---
+
+### Route Documentation: `/api/sell-stock`
+
+- **Route** : `/api/sell-stock`
+- **Request Type**: POST  
+- **Purpose**: Sells stock(s) for a user and updates their portfolio value and account balance.
+
+#### **Request Body**:  
+- `symbol` (String): The stock symbol.  
+- `quantity` (Integer): The number of shares to sell.  
+- `userId` (Integer): The user ID.  
+
+#### **Response Format**: JSON  
+
+##### **Success Response Example**:  
+- **Code**: 200  
+- **Content**:  
+  ```json
+  {
+      "success": true,
+      "new_balance": 1100.0,
+      "portfolio_value": 500.0
+  }
+  ```  
+
+##### **Error Responses**:  
+1. **Code**: 400  
+   **Content**:  
+   ```json
+   { "success": false, "error": "Invalid input" }
+   ```
+
+2. **Code**: 404  
+   **Content**:  
+   ```json
+   { "success": false, "error": "User not found" }
+   ```
+
+3. **Code**: 400  
+   **Content**:  
+   ```json
+   { "success": false, "error": "Insufficient shares" }
+
+#### **Example Request**:  
+```http
+POST /api/sell-stock HTTP/1.1
+Host: example.com
+Content-Type: application/json
+
+{
+    "symbol": "AAPL",
+    "quantity": 5,
+    "userId": 1
+}
+```
+
+#### **Example Response**:  
+```json
+{
+    "success": true,
+    "new_balance": 1100.0,
+    "portfolio_value": 500.0
+}
+   
