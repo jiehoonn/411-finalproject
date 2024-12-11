@@ -144,3 +144,245 @@ flask run
 - [Alpha Vantage API Documentation](https://www.alphavantage.co/documentation/)
 - Key endpoints used: Quote, Time Series Daily, ...
 - Database: SQLAlchemy for data persistence.
+
+
+## Route Documentation
+
+### 1. Create Account
+
+- **Route**: `/create-account`  
+- **Request Type**: POST  
+- **Purpose**: Creates a new user account with a username and password.  
+
+#### Request Body:
+```json
+{
+  "username": "newuser123",
+  "password": "securepassword"
+}
+```
+
+#### Response Format:
+**Success Response:**
+```json
+{
+  "message": "Account created successfully",
+  "status": "200"
+}
+```
+
+---
+
+### 2. Login
+
+- **Route**: `/login`  
+- **Request Type**: POST  
+- **Purpose**: Authenticates an existing user with their username and password.  
+
+#### Request Body:
+```json
+{
+  "username": "existinguser",
+  "password": "userpassword"
+}
+```
+
+#### Response Format:
+**Success Response:**
+```json
+{
+  "message": "Login successful",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
+  "status": "200"
+}
+```
+
+**Error Response:**
+```json
+{
+  "message": "Invalid credentials",
+  "status": "401"
+}
+```
+
+---
+
+### 3. Update Password
+
+- **Route**: `/update-password`  
+- **Request Type**: POST  
+- **Purpose**: Allows a user to update their password.  
+
+#### Request Body:
+```json
+{
+  "username": "existinguser",
+  "old_password": "oldpassword",
+  "new_password": "newsecurepassword"
+}
+```
+
+#### Response Format:
+**Success Response:**
+```json
+{
+  "message": "Password updated successfully",
+  "status": "200"
+}
+```
+
+**Error Response:**
+```json
+{
+  "message": "Invalid credentials",
+  "status": "401"
+}
+```
+
+---
+
+### 4. Portfolio Overview
+
+- **Route**: `/portfolio`  
+- **Request Type**: GET  
+- **Purpose**: Retrieves the user's current portfolio, including holdings and their values.  
+
+#### Response Format:
+**Success Response:**
+```json
+{
+  "portfolio": [
+    {
+      "symbol": "AAPL",
+      "quantity": 10,
+      "price": 150.50,
+      "total_value": 1505.00
+    },
+    {
+      "symbol": "GOOG",
+      "quantity": 5,
+      "price": 2800.00,
+      "total_value": 14000.00
+    }
+  ],
+  "total_portfolio_value": 15505.00,
+  "status": "200"
+}
+```
+
+---
+
+### 5. Buy Stock
+
+- **Route**: `/buy-stock`  
+- **Request Type**: POST  
+- **Purpose**: Allows the user to purchase a specified quantity of a stock.  
+
+#### Request Body:
+```json
+{
+  "symbol": "AAPL",
+  "quantity": 5
+}
+```
+
+#### Response Format:
+**Success Response:**
+```json
+{
+  "message": "Stock purchased successfully",
+  "status": "200"
+}
+```
+
+**Error Response:**
+```json
+{
+  "message": "Insufficient funds",
+  "status": "400"
+}
+```
+
+---
+
+### 6. Sell Stock
+
+- **Route**: `/sell-stock`  
+- **Request Type**: POST  
+- **Purpose**: Allows the user to sell a specified quantity of a stock.  
+
+#### Request Body:
+```json
+{
+  "symbol": "AAPL",
+  "quantity": 5
+}
+```
+
+#### Response Format:
+**Success Response:**
+```json
+{
+  "message": "Stock sold successfully",
+  "status": "200"
+}
+```
+
+**Error Response:**
+```json
+{
+  "message": "Insufficient stock quantity",
+  "status": "400"
+}
+```
+
+---
+
+### 7. Lookup Stock
+
+- **Route**: `/lookup-stock`  
+- **Request Type**: GET  
+- **Purpose**: Retrieves detailed information about a specific stock.  
+
+#### Query Parameters:
+- `symbol` (String): Stock symbol to look up.
+
+#### Response Format:
+**Success Response:**
+```json
+{
+  "symbol": "AAPL",
+  "price": 150.50,
+  "open": 148.00,
+  "close": 149.50,
+  "high": 151.00,
+  "low": 147.50,
+  "status": "200"
+}
+```
+
+---
+
+### 8. Historical Data
+
+- **Route**: `/historical-data`  
+- **Request Type**: GET  
+- **Purpose**: Retrieves historical data for a stock over a specified period.  
+
+#### Query Parameters:
+- `symbol` (String): Stock symbol.
+- `range` (String): Time range (e.g., `1d`, `10d`, `1m`, `6m`, `1y`).
+
+#### Response Format:
+**Success Response:**
+```json
+{
+  "symbol": "AAPL",
+  "historical_data": [
+    { "date": "2024-12-01", "close": 150.50 },
+    { "date": "2024-12-02", "close": 149.50 }
+  ],
+  "status": "200"
+}
+
+```
