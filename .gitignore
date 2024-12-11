@@ -2,7 +2,7 @@
 node_modules/
 
 # Python
-backend/venv/
+backend/stock_trading_venv/
 __pycache__/
 
 # dotenv environment variables file
