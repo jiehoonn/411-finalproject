@@ -5,3 +5,5 @@ python-dotenv==0.19.0
 requests==2.26.0
 bcrypt==3.2.0
 pytest==6.2.5
+werkzeug==2.0.1
+sqlalchemy<2.0.0

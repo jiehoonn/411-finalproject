@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from config import Config
@@ -12,13 +12,13 @@ def create_app():
     CORS(app)
     db.init_app(app)
 
+    @app.route('/health')
+    def health_check():
+        return jsonify({'status': 'healthy'})  # Return JSON response
+
     from app.routes import auth, stocks
     app.register_blueprint(auth.bp)
     app.register_blueprint(stocks.bp)
-
-    @app.route('/health')
-    def health_check():
-        return {'status': 'healthy'}, 200
 
     with app.app_context():
         db.create_all()
