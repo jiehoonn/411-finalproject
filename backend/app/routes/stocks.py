@@ -1,12 +1,10 @@
 from flask import Blueprint, request, jsonify
 from flask_cors import CORS
-from services.alpha_vantage import AlphaVantageService
-from datetime import datetime, timedelta
-import requests
-from services.portfolio import PortfolioService
+from ..services.alpha_vantage import AlphaVantageService
+from datetime import datetime
 from app.models import User, Portfolio, db
 import logging
-from logger import configure_logger
+from .logger import configure_logger
 
 
 logger = logging.getLogger(__name__)

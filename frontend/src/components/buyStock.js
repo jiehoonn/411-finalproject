@@ -1,34 +1,34 @@
 import React from "react";
 import { Form, Input, Button, message } from "antd";
 
-function BuyStock({ fetchBalanceAndPortfolio }) {
+function BuyStock({ onSuccess }) {
   const [form] = Form.useForm();
 
   const onFinish = async (values) => {
-    try {
-      const user = JSON.parse(localStorage.getItem('user'));
-      const response = await fetch('http://127.0.0.1:5000/api/buy-stock', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...values,
-          userId: user.id,
-        }),
-      });
-      const data = await response.json();
+      try {
+          const user = JSON.parse(localStorage.getItem('user'));
+          const response = await fetch('http://127.0.0.1:5000/api/buy-stock', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                  ...values,
+                  userId: user.id,
+              }),
+          });
+          const data = await response.json();
 
-      if (data.success) {
-        message.success('Stock purchased successfully');
-        form.resetFields();
-        fetchBalanceAndPortfolio();
-      } else {
-        message.error(data.error);
+          if (data.success) {
+              message.success('Stock purchased successfully');
+              form.resetFields();
+              onSuccess(); // Call onSuccess to refresh portfolio data
+          } else {
+              message.error(data.error);
+          }
+      } catch (error) {
+          message.error('Failed to purchase stock');
       }
-    } catch (error) {
-      message.error('Failed to purchase stock');
-    }
   };
 
   return (
