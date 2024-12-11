@@ -1,9 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_cors import CORS
 from services.alpha_vantage import AlphaVantageService
-from datetime import datetime, timedelta
-import requests
-from services.portfolio import PortfolioService
+from datetime import datetime
 from app.models import User, Portfolio, db
 import logging
 from logger import configure_logger
@@ -20,21 +18,24 @@ alpha_vantage = AlphaVantageService()
 @bp.route('/api/stock/quote/<symbol>')
 def get_quote(symbol):
     """
-    Get the current stock data for the given symbol.
+    Get the current stock data for the given stock symbol.
 
     Args:
-        symbol (str): The stock symbol for which the quote is fetched.
+        symbol (str): The stock symbol for which the quote (i.e data) is to be fetched.
 
     Returns:
-        quote: Stock data in JSON format.
+        jsonify: The stock data in JSON format, or error message.
+
+    Raises:
+        Exception: If an error occurs while fetching the stock quote.
     """
     logger.info(f"Fetching stock info for: {symbol}")
     try:
         quote = alpha_vantage.get_stock_quote(symbol)
-        logger.debug(f"Stock info fetched successfully: {quote}")
+        logger.info(f"Stock info fetched successfully: {quote}")
         return jsonify(quote)
     except Exception as e:
-        logger.error(f"Error fetching stock quote for {symbol}: {str(e)}")
+        logger.error(f"Error fetching stock info for {symbol}: {str(e)}")
         return jsonify({'error': 'Failed to fetch stock quote'}), 500
 
 
@@ -49,14 +50,17 @@ def calculate_value(symbol, shares):
         shares (int): The number of shares owned.
 
     Returns:
-        value: The calculated value of the stock position in JSON format.
+        value: The value of the stock position in JSON format or error message.
+
+    Raises:
+        Exception: If an error occurs while calculating the stock value.
     """
-    logger.info(f"Finding stock value for symbol with shares: {symbol, shares}")
+    logger.info(f"Calculating stock value for symbol with shares: {symbol, shares}")
     try:
         quote = alpha_vantage.get_stock_quote(symbol)
         price = float(quote['Global Quote']['05. price'])
         value = price * shares
-        logger.debug(f"Calculated value: {value}")
+        logger.info(f"Calculated value: {value}")
         return jsonify({'value': value})
     except Exception as e:
         logger.error(f"Error in calculating stock value for {symbol}: {str(e)}")
@@ -67,13 +71,17 @@ def calculate_value(symbol, shares):
 @bp.route('/lookup-stock', methods=['GET'])
 def lookup_stock():
     """
-    Find and return the current stock data and market status for a given symbol
+    Find and return the current stock data and market status for a given symbol.
 
     Args:
         symbol (str): The stock symbol.
 
     Returns:
-        data: Stock data in JSON format or error message.
+        data: The stock data in JSON format or error message.
+
+    Raises:
+        ValueError: If no symbol is provided in the input or no data is found for a given symbol. ????
+        Exception: If an error occurs while fetching the stock or market status.
     """
     symbol = request.args.get('symbol')
     if not symbol:
@@ -106,8 +114,6 @@ def lookup_stock():
                 ms.append({
                     "market_type": m.get("market_type", "Unknown"),
                     "region": m.get("region", "Unknown"),
-                    # "local_open": m.get("local_open", "Unknown"),
-                    # "local_close": m.get("local_close", "Unknown"),
                     "current_status": m.get("current_status", "Unknown")
                 })
         logger.debug(f"Market status: {ms}")
@@ -132,10 +138,14 @@ def historical_data():
 
     Args:
         symbol (str): The stock symbol.
-        range (str): Time range for the historical data (e.g., '1d', '10d', '1m').
+        range (str): The time range for the historical data (e.g., '1d', '10d', '1m').
 
     Returns:
-        main_data: Historical stock trend data in JSON format or error message.
+        main_data: The historical stock trend data in JSON format or error message.
+
+    Raises:
+        ValueError: If no symbol is provided in the input or an invalid data is retrieved. ???
+        Exception: If an error occurs while fetching the historical trend data.
     """
     symbol = request.args.get('symbol')
     if not symbol:
@@ -203,6 +213,19 @@ def historical_data():
 
 @bp.route('/api/portfolio-status/<int:user_id>')
 def get_portfolio_status(user_id):
+    """
+    Get the portfolio status i.e account balance and portfolio value for a user.
+
+    Args:
+        user_id (int): The user's ID.
+
+    Returns:
+        jsonify: The user's balance and portfolio value in JSON format, or error message.
+
+    Raises:
+        ValueError: If no user is found for the given ID.  ???
+        Exception: If an error occurs while fetching portfolio data.
+    """
     user = User.query.get(user_id)
     if not user:
         return jsonify({'error': 'No user found'}), 404
@@ -219,99 +242,131 @@ def get_portfolio_status(user_id):
         'portfolio_value': total_value
     })
 
+
+
 @bp.route('/api/buy-stock', methods=['POST'])
 def buy_stock():
-    """Buy stock endpoint"""
+    """
+    Buy stock(s) for a user and update portfolio value and account balance.
+
+    Args:
+        symbol (str): The stock symbol.
+        quantity (int): The number of shares to buy.
+        userId (int): The user's ID.
+
+    Returns:
+        jsonify: The user's updated balance and portfolio value in JSON format, or error message.
+
+    Raises:
+        ValueError: If the input data is invalid, user is not found or insufficient funds for buying the stocks.
+        Exception: If an error occurs while buying stock or updating portfolio.
+    """
     data = request.json
     symbol = data.get('symbol')
     quantity = int(data.get('quantity', 0))
     user_id = data.get('userId')
 
     if not symbol or quantity <= 0 or not user_id:
-        return jsonify({'success': False, 'error': 'Invalid input'}), 400
+        return jsonify({'success': False, 'error': 'Invalid input'}), 400
 
-    quote = alpha_vantage.get_stock_quote(symbol)
-    if 'Global Quote' not in quote:
-        return jsonify({'success': False, 'error': 'Invalid stock symbol'}), 400
+    quote = alpha_vantage.get_stock_quote(symbol)
+    if 'Global Quote' not in quote:
+        return jsonify({'success': False, 'error': 'Invalid stock symbol'}), 400
 
-    current_price = float(quote['Global Quote']['05. price'])
-    total_cost = current_price * quantity
+    current_price = float(quote['Global Quote']['05. price'])
+    total_cost = current_price * quantity
 
-    user = User.query.get(user_id)
-    if not user:
-        return jsonify({'success': False, 'error': 'User not found'}), 404
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'success': False, 'error': 'User not found'}), 404
 
-    if user.balance < total_cost:
-        return jsonify({'success': False, 'error': 'Insufficient funds'}), 400
+    if user.balance < total_cost:
+        return jsonify({'success': False, 'error': 'Insufficient funds'}), 400
 
-    try:
-        # Update or create position
-        position = Portfolio.query.filter_by(user_id=user.id, symbol=symbol).first()
-        if position:
-            position.quantity += quantity
-        else:
-            position = Portfolio(
-                user_id=user.id,
-                symbol=symbol,
-                quantity=quantity,
-                purchase_price=current_price
-            )
-            db.session.add(position)
+    try:
+        # Update or create position
+        position = Portfolio.query.filter_by(user_id=user.id, symbol=symbol).first()
+        if position:
+            position.quantity += quantity
+        else:
+            position = Portfolio(
+            user_id=user.id,
+            symbol=symbol,
+            quantity=quantity,
+            purchase_price=current_price
+            )
+            db.session.add(position)
 
-        user.balance -= total_cost
-        db.session.commit()
+        user.balance -= total_cost
+        db.session.commit()
 
-        return jsonify({
-            'success': True,
-            'new_balance': user.balance,
-            'portfolio_value': total_cost
-        })
+        return jsonify({
+        'success': True,
+        'new_balance': user.balance,
+        'portfolio_value': total_cost
+        })
 
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'success': False, 'error': str(e)}), 500
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 
 @bp.route('/api/sell-stock', methods=['POST'])
 def sell_stock():
-    """Sell stock endpoint"""
-    data = request.json
-    symbol = data.get('symbol')
-    quantity = int(data.get('quantity', 0))
-    user_id = data.get('userId')
+    """
+    Sell stock(s) for a user and update portfolio value and account balance.
 
-    if not symbol or quantity <= 0 or not user_id:
-        return jsonify({'success': False, 'error': 'Invalid input'}), 400
+    Args:
+        symbol (str): The stock symbol.
+        quantity (int): The number of shares to sell.
+        userId (int): The user's ID.
 
-    user = User.query.get(user_id)
-    if not user:
-        return jsonify({'success': False, 'error': 'User not found'}), 404
+    Returns:
+        jsonify: The user's updated balance and portfolio value in JSON format, or error message.
 
-    position = Portfolio.query.filter_by(user_id=user.id, symbol=symbol).first()
-    if not position or position.quantity < quantity:
-        return jsonify({'success': False, 'error': 'Insufficient shares'}), 400
+    Raises:
+        ValueError: If the input data is invalid, user is not found or insufficient funds for selling the stocks.
+        Exception: If an error occurs while selling stock or updating portfolio.
+    """
+    data = request.json
+    symbol = data.get('symbol')
+    quantity = int(data.get('quantity', 0))
+    user_id = data.get('userId')
 
-    quote = alpha_vantage.get_stock_quote(symbol)
-    if 'Global Quote' not in quote:
-        return jsonify({'success': False, 'error': 'Invalid stock symbol'}), 400
+    if not symbol or quantity <= 0 or not user_id:
+        return jsonify({'success': False, 'error': 'Invalid input'}), 400
 
-    current_price = float(quote['Global Quote']['05. price'])
-    total_value = current_price * quantity
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'success': False, 'error': 'User not found'}), 404
 
-    try:
-        position.quantity -= quantity
-        user.balance += total_value
+    position = Portfolio.query.filter_by(user_id=user.id, symbol=symbol).first()
+    if not position or position.quantity < quantity:
+        return jsonify({'success': False, 'error': 'Insufficient shares'}), 400
 
-        if position.quantity == 0:
-            db.session.delete(position)
+    quote = alpha_vantage.get_stock_quote(symbol)
+    if 'Global Quote' not in quote:
+        return jsonify({'success': False, 'error': 'Invalid stock symbol'}), 400
 
-        db.session.commit()
+    current_price = float(quote['Global Quote']['05. price'])
+    total_value = current_price * quantity
 
-        return jsonify({
-            'success': True,
-            'new_balance': user.balance,
-            'portfolio_value': total_value
-        })
+    try:
+        position.quantity -= quantity
+        user.balance += total_value
 
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'success': False, 'error': str(e)}), 500
+        if position.quantity == 0:
+            db.session.delete(position)
+
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'new_balance': user.balance,
+            'portfolio_value': total_value
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
