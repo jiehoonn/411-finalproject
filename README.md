@@ -136,7 +136,7 @@ npm start
 
 ```bash
 cd backend
-flask run
+python3 -m flask run
 ```
 
 ## API Documentation
