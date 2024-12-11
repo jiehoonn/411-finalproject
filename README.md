@@ -129,6 +129,67 @@ A stock trading platform that enables individual users to manage portfolios, mak
 
 
 
+# Backend Setup and Running Instructions
+
+## Setup Virtual Environment
+
+1. Navigate to the backend directory:
+   ```bash
+   cd backend
+   ```
+
+2. Make the script executable:
+   ```bash
+   chmod +x setup_venv.sh
+   ```
+
+3. Run the script to set up the virtual environment:
+   ```bash
+   ./setup_venv.sh
+   ```
+
+## Activate Virtual Environment
+
+1. Activate the virtual environment:
+   ```bash
+   source stock_trading_venv/bin/activate
+   ```
+
+## Run Flask
+
+1. Start Flask:
+   ```bash
+   python3 -m flask run
+   ```
+
+## Smoke Test
+
+1. Make sure you have two backend terminals:
+   - One running Flask in the virtual environment.
+   - The other running in just the backend (not in the venv).
+
+2. In the terminal that's not in the virtual environment, make the script executable:
+   ```bash
+   chmod +x smoketest.sh
+   ```
+
+3. Run the smoke test:
+   ```bash
+   ./smoketest.sh
+   ```
+
+## Docker Setup
+
+1. To stop any running containers:
+   ```bash
+   docker-compose down
+   ```
+
+2. Build the containers:
+   ```bash
+   docker-compose up --build
+   ```
+
 
 ## API and Database Used
 
@@ -558,8 +619,7 @@ GET host/historical-data?symbol=AAPL&range=1m
 
 #### **Example Request**:  
 ```http
-GET /api/portfolio-status/1 HTTP/1.1
-Host: example.com
+GET host/api/portfolio-status/
 ```
 
 #### **Example Response**:  
@@ -616,8 +676,7 @@ Host: example.com
    ```
 #### **Example Request**:  
 ```http
-POST /api/buy-stock HTTP/1.1
-Host: example.com
+POST host/api/buy-stock
 Content-Type: application/json
 
 {
@@ -682,8 +741,7 @@ Content-Type: application/json
 
 #### **Example Request**:  
 ```http
-POST /api/sell-stock HTTP/1.1
-Host: example.com
+POST host/api/sell-stock 
 Content-Type: application/json
 
 {
@@ -700,4 +758,6 @@ Content-Type: application/json
     "new_balance": 1100.0,
     "portfolio_value": 500.0
 }
-   
+
+
+
