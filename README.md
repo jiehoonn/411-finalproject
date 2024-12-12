@@ -73,7 +73,7 @@ A stock trading platform that enables individual users to manage portfolios, mak
 - Customizable date ranges
 - **API Endpoints Used**: Time Series Daily, Monthly, and Weekly Endpoints
 
-## Running the application
+# Running the application
 
 1. **Clone the repository:**
 
@@ -87,80 +87,61 @@ A stock trading platform that enables individual users to manage portfolios, mak
    cd [project-name]
    ```
 
-3. **Activate the virtual environment for frontend:**
-
-   ```bash
-   cd frontend
-   source venv/bin/activate
+3. **Add your API key to the backend env file:**
+   ```.env
+   ALPHA_VANTAGE_API_KEY=<YOUR_API_KEY>
    ```
 
-3. **Install frontend dependencies:**
 
-   ```bash
-   pip install -r requirements.txt
-   ```
+## Backend Setup and Running Instructions
 
-4. **Run the React Application:**
-   ```bash
-   npm start
-   ```
-  
+### Setup Virtual Environment
 
-5. **In a seperate terminal, activate the virtual environment for the backend:**
-
-   ```bash
-   cd /backend
-   source venv/bin/activate
-   ```
-
-8. **Install backend dependencies:**
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-   
-
-9.**Run the Flask Application:**
-   ```bash
-   python3 -m flask run
-   ```
-
-10. **Add your API key to the backend env file:**
-
-
-
-# Backend Setup and Running Instructions
-
-## Setup Virtual Environment
-
-1. Navigate to the backend directory:
+4. Navigate to the backend directory:
    ```bash
    cd backend
    ```
 
-2. Make the script executable:
+5. Make the script executable:
    ```bash
    chmod +x setup_venv.sh
    ```
 
-3. Run the script to set up the virtual environment:
+6. Run the script to set up the virtual environment:
    ```bash
    ./setup_venv.sh
    ```
 
-## Activate Virtual Environment
-
-1. Activate the virtual environment:
+7. Activate the virtual environment:
    ```bash
    source stock_trading_venv/bin/activate
    ```
 
-## Run Flask
+### Run Flask
 
-1. Start Flask:
+8. Start Flask:
    ```bash
    python3 -m flask run
    ```
+
+## Frontend Setup and Running Instructions
+
+### Install Dependencies
+9. In a separate terminal, navigate to frontend:
+   ```bash
+   cd frontend
+   ```
+10. Install dependencies:
+    ```bash
+    npm install
+    ```
+11. Run frontend:
+    ```bash
+    npm start
+    ```
+
+ ## IMPORTANT NOTE:
+ There are limited API calls to AlphaVantage (25 per day). This caused testing in general to be quite difficult for us, so please keep that in mind when running our application.
 
 ## Smoke Test
 
