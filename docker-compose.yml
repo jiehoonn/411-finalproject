@@ -1,0 +1,18 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "5001:5000"
+    environment:
+      - ALPHA_VANTAGE_API_KEY=${ALPHA_VANTAGE_API_KEY}
+      - SECRET_KEY=${SECRET_KEY}
+      - FLASK_APP=app
+      - FLASK_ENV=development
+    volumes:
+      - ./backend/instance:/app/instance
+
+networks:
+  default:
+    driver: bridge

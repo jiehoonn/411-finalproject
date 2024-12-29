@@ -1,29 +1,34 @@
 import React from "react";
 import { Form, Input, Button, message } from "antd";
 
-function SellStock() {
+function SellStock({ onSuccess }) {
   const [form] = Form.useForm();
 
   const onFinish = async (values) => {
-    try {
-      const response = await fetch('http://127.0.0.1:5000/api/sell-stock', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(values),
-      });
-      const data = await response.json();
-      
-      if (data.success) {
-        message.success('Stock sold successfully');
-        form.resetFields();
-      } else {
-        message.error(data.error);
+      try {
+          const user = JSON.parse(localStorage.getItem('user'));
+          const response = await fetch('http://127.0.0.1:5000/api/sell-stock', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                  ...values,
+                  userId: user.id,
+              }),
+          });
+          const data = await response.json();
+
+          if (data.success) {
+              message.success('Stock sold successfully');
+              form.resetFields();
+              onSuccess(); // Call onSuccess to refresh portfolio data
+          } else {
+              message.error(data.error);
+          }
+      } catch (error) {
+          message.error('Failed to sell stock');
       }
-    } catch (error) {
-      message.error('Failed to sell stock');
-    }
   };
 
   return (
